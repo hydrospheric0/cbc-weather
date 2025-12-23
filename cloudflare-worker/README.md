@@ -16,13 +16,21 @@ Other origins are rejected with `403`.
 ## Deploy
 Prereqs:
 - Cloudflare account
-- `wrangler` installed (`npm i -g wrangler`)
 
-From the repo root:
+### Option A (recommended): local `wrangler` via npm
+- `npm --prefix cloudflare-worker install`
+- `npm --prefix cloudflare-worker run login`
+- `npm --prefix cloudflare-worker run deploy`
 
-- `cd cloudflare-worker`
-- `wrangler login`
-- `wrangler deploy`
+### Option B: global install
+- Install `wrangler` globally: `npm i -g wrangler`
+- Then run: `wrangler login` and `wrangler deploy`
+
+From the repo root (Option A):
+
+- `npm --prefix cloudflare-worker install`
+- `npm --prefix cloudflare-worker run login`
+- `npm --prefix cloudflare-worker run deploy`
 
 Wrangler prints a URL like:
 - `https://cbc-weather-awc-proxy.<your-subdomain>.workers.dev`
