@@ -426,107 +426,104 @@ export default function App() {
   }, [selectedLocation]);
 
   const extendPlotTo = null;
+  const showForecastOverlay = selectedLocation?.source === 'cbc-circle';
 
   return (
-    <div className="app">
-      <div className="topbar">CBC weather</div>
-      <div className="content">
-        <div className="grid">
-          <MapPane
-            query={query}
-            setQuery={setQuery}
-            onSearch={onSearch}
-            onSelectCandidate={onSelectCandidate}
-            error={error}
-            candidates={candidates}
-            saved={saved}
-            selected={selectedLocation ? {
-              lat: selectedLocation.lat,
-              lon: selectedLocation.lon,
-              bounds: selectedLocation.bounds,
-              label: selectedLocation.label,
-              source: selectedLocation.source,
-              circle: selectedLocation.circle
-            } : null}
-            countDateInfo={{
-              iso: countDateISO || '',
-              passed: Boolean(countDatePassed),
-              weatherSummary: countDateWeatherSummary || ''
-            }}
-            onJumpToForecast={scrollToForecast}
-            onSelect={selectAndFetch}
-          />
-        </div>
+    <div className="app appFull">
+      <MapPane
+        appTitle="CBC weather"
+        query={query}
+        setQuery={setQuery}
+        onSearch={onSearch}
+        onSelectCandidate={onSelectCandidate}
+        error={error}
+        candidates={candidates}
+        saved={saved}
+        selected={selectedLocation ? {
+          lat: selectedLocation.lat,
+          lon: selectedLocation.lon,
+          bounds: selectedLocation.bounds,
+          label: selectedLocation.label,
+          source: selectedLocation.source,
+          circle: selectedLocation.circle
+        } : null}
+        countDateInfo={{
+          iso: countDateISO || '',
+          passed: Boolean(countDatePassed),
+          weatherSummary: countDateWeatherSummary || ''
+        }}
+        onJumpToForecast={() => {}}
+        onSelect={selectAndFetch}
+      />
 
-        <div style={{ marginTop: 14, width: '100%', marginLeft: 'auto', marginRight: 'auto', display: 'flex', gap: 14, alignItems: 'stretch', height: '40vh' }}>
-          <div className="card" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <div className="cardHeader" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-              <span>{forecastTitle}</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    <span className="small" style={{ fontWeight: 600 }}>Highlight</span>
-                    <input
-                      className="input"
-                      type="date"
-                      value={highlightDateISO}
-                      onChange={(e) => setHighlightDateISO(e.target.value)}
-                      style={{ width: 150, padding: '6px 8px', fontSize: 12 }}
-                      title="Highlight a day on the plot"
-                    />
-                  </div>
-                <button
-                  className="button"
-                  style={{ padding: '6px 10px', fontSize: 12, background: forecastDays === 3 ? '#e5e7eb' : '#fff', fontWeight: forecastDays === 3 ? 700 : 400 }}
-                  onClick={() => setForecastDays(3)}
-                  title="3-day forecast"
-                >
-                  3 day
-                </button>
-                <button
-                  className="button"
-                  style={{ padding: '6px 10px', fontSize: 12, background: forecastDays === 8 ? '#e5e7eb' : '#fff', fontWeight: forecastDays === 8 ? 700 : 400 }}
-                  onClick={() => setForecastDays(8)}
-                  title="8-day forecast"
-                >
-                  8 day
-                </button>
-                <button
-                  className="button"
-                  style={{ padding: '6px 10px', fontSize: 12 }}
-                  onClick={async () => {
-                    try {
-                      const Plotly = (await import('plotly.js-dist-min')).default;
-                      const el = document.getElementById('forecast-plot');
-                      if (!el) return;
-
-                      const title = (selectedLocation?.label || '').trim();
-                      const layoutUpdate = { title: { text: title || '', x: 0.01, xanchor: 'left' } };
-                      await Plotly.relayout(el, layoutUpdate);
-
-                      const filenameBase = (title || `${forecastDays}-day-forecast`).replace(/[^a-z0-9\-_. ]/gi, '').trim().replace(/\s+/g, '_');
-                      await Plotly.downloadImage(el, { format: 'png', filename: filenameBase || 'forecast', scale: 2 });
-                    } catch (e) {
-                      // eslint-disable-next-line no-console
-                      console.error('Export failed', e);
-                    }
-                  }}
-                  title="Export plot"
-                >
-                  Export
-                </button>
+      {showForecastOverlay && (
+        <div id="forecast-overlay" className="card forecastOverlay">
+          <div className="cardHeader" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <span>{forecastTitle}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <span className="small" style={{ fontWeight: 600 }}>Highlight</span>
+                <input
+                  className="input"
+                  type="date"
+                  value={highlightDateISO}
+                  onChange={(e) => setHighlightDateISO(e.target.value)}
+                  style={{ width: 150, padding: '6px 8px', fontSize: 12 }}
+                  title="Highlight a day on the plot"
+                />
               </div>
+              <button
+                className="button"
+                style={{ padding: '6px 10px', fontSize: 12, background: forecastDays === 3 ? '#e5e7eb' : '#fff', fontWeight: forecastDays === 3 ? 700 : 400 }}
+                onClick={() => setForecastDays(3)}
+                title="3-day forecast"
+              >
+                3 day
+              </button>
+              <button
+                className="button"
+                style={{ padding: '6px 10px', fontSize: 12, background: forecastDays === 8 ? '#e5e7eb' : '#fff', fontWeight: forecastDays === 8 ? 700 : 400 }}
+                onClick={() => setForecastDays(8)}
+                title="8-day forecast"
+              >
+                8 day
+              </button>
+              <button
+                className="button"
+                style={{ padding: '6px 10px', fontSize: 12 }}
+                onClick={async () => {
+                  try {
+                    const Plotly = (await import('plotly.js-dist-min')).default;
+                    const el = document.getElementById('forecast-plot');
+                    if (!el) return;
+
+                    const title = (selectedLocation?.label || '').trim();
+                    const layoutUpdate = { title: { text: title || '', x: 0.01, xanchor: 'left' } };
+                    await Plotly.relayout(el, layoutUpdate);
+
+                    const filenameBase = (title || `${forecastDays}-day-forecast`).replace(/[^a-z0-9\-_. ]/gi, '').trim().replace(/\s+/g, '_');
+                    await Plotly.downloadImage(el, { format: 'png', filename: filenameBase || 'forecast', scale: 2 });
+                  } catch (e) {
+                    // eslint-disable-next-line no-console
+                    console.error('Export failed', e);
+                  }
+                }}
+                title="Export plot"
+              >
+                Export
+              </button>
             </div>
-            <div className="cardBody" style={{ flex: 1, minHeight: 0, padding: 0 }}>
-              <div style={{ padding: 12, borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-                <SummaryTable forecast={forecast} highlightDateISO={highlightDateISO || undefined} daysToShow={forecastDays} />
-              </div>
-              <div style={{ height: 'calc(100% - 82px)', minHeight: 0 }}>
-                <ForecastPlot forecast={plotForecast} highlightDateISO={highlightDateISO || undefined} extendXAxisTo={extendPlotTo} plotId="forecast-plot" />
-              </div>
+          </div>
+          <div className="cardBody" style={{ flex: 1, minHeight: 0, padding: 0 }}>
+            <div style={{ padding: 12, borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+              <SummaryTable forecast={forecast} highlightDateISO={highlightDateISO || undefined} daysToShow={forecastDays} />
+            </div>
+            <div style={{ height: 'calc(100% - 82px)', minHeight: 0 }}>
+              <ForecastPlot forecast={plotForecast} highlightDateISO={highlightDateISO || undefined} extendXAxisTo={extendPlotTo} plotId="forecast-plot" />
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
