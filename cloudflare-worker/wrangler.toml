@@ -1,0 +1,7 @@
+name = "cbc-weather-awc-proxy"
+main = "src/index.js"
+compatibility_date = "2025-12-23"
+
+# This Worker does not need bindings/secrets.
+# After `wrangler deploy`, your base URL will look like:
+#   https://cbc-weather-awc-proxy.<your-subdomain>.workers.dev
