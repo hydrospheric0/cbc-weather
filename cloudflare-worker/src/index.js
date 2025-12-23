@@ -56,7 +56,7 @@ export default {
     // Reject unknown browser origins early (including preflight).
     const origin = request.headers.get('Origin');
     if (origin && !getAllowedOrigin(request)) {
-      return new Response('Forbidden origin', { status: 403 });
+      return new Response('Forbidden origin', { status: 403, headers: corsHeaders(request) });
     }
 
     if (request.method === 'OPTIONS') {
