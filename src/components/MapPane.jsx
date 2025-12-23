@@ -257,6 +257,7 @@ function pick(props, keys) {
 }
 
 export default function MapPane({
+  appTitle,
   query,
   setQuery,
   onSearch,
@@ -841,8 +842,8 @@ export default function MapPane({
   }, [didAutoLocate, selected, userLocation, cbcCenters, selectCbcCircle]);
 
   return (
-    <div className="card mapWrap">
-      <div className="map">
+    <div className="mapFullWrap">
+      <div className="map mapFull">
         <div
           style={{
             position: 'absolute',
@@ -860,7 +861,10 @@ export default function MapPane({
             boxShadow: '0 6px 20px rgba(0,0,0,0.12)'
           }}
         >
-          <div className="small" style={{ fontWeight: 600 }}>Location search</div>
+          {appTitle ? (
+            <div style={{ fontWeight: 800, fontSize: 16, lineHeight: 1.1 }}>{appTitle}</div>
+          ) : null}
+          <div className="small" style={{ fontWeight: 600, marginTop: appTitle ? 6 : 0 }}>Location search</div>
           <div className="row" style={{ marginTop: 6 }}>
             <input
               className="input"

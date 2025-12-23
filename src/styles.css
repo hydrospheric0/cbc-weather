@@ -14,6 +14,12 @@ html, body {
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
 }
 
+.appFull {
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
 .topbar {
   width: 100%;
   box-sizing: border-box;
@@ -78,6 +84,11 @@ html, body {
   min-height: 320px;
 }
 
+.mapFullWrap {
+  height: 100%;
+  width: 100%;
+}
+
 .map {
   margin: 8px;
   height: calc(50vh - 16px);
@@ -85,6 +96,29 @@ html, body {
   border-radius: 10px;
   overflow: hidden;
   position: relative;
+}
+
+.map.mapFull {
+  margin: 0;
+  height: 100vh;
+  min-height: 100vh;
+  border-radius: 0;
+}
+
+.map.mapFull .leaflet-container {
+  border-radius: 0;
+}
+
+.forecastOverlay {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 1200;
+  width: min(980px, calc(100% - 20px));
+  height: 42vh;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
 }
 
 .map .leaflet-container {
