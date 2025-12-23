@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "devDependencies": {
-    "wrangler": "^3.114.0"
+    "wrangler": "^4.56.0"
   },
   "scripts": {
     "login": "wrangler login",

@@ -22,6 +22,8 @@ Prereqs:
 - `npm --prefix cloudflare-worker run login`
 - `npm --prefix cloudflare-worker run deploy`
 
+Note: `wrangler@4` may require a very recent Node 20 patch release. If you see an `EBADENGINE` warning, either bump Node (recommended) or pin Wrangler to v3.
+
 ### Option B: global install
 - Install `wrangler` globally: `npm i -g wrangler`
 - Then run: `wrangler login` and `wrangler deploy`
