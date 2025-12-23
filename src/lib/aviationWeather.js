@@ -5,6 +5,12 @@ function baseUrl() {
   try {
     const host = String(window?.location?.hostname || '').toLowerCase();
     if (host === 'localhost' || host === '127.0.0.1') return '/awc';
+
+    // Default production hosting for this repo is GitHub Pages.
+    // If the build-time env var wasn't set, fall back to the deployed Worker.
+    if (host === 'hydrospheric0.github.io') {
+      return 'https://cbc-weather-awc-proxy.cbc-weather.workers.dev';
+    }
   } catch {
     // ignore
   }

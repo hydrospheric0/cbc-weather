@@ -34,7 +34,7 @@ jobs:
         env:
           # Set this in GitHub: Settings → Secrets and variables → Actions → Variables
           # Example: https://cbc-weather-awc-proxy.<your-subdomain>.workers.dev
-          VITE_AWC_BASE_URL: ${{ vars.VITE_AWC_BASE_URL }}
+          VITE_AWC_BASE_URL: ${{ vars.VITE_AWC_BASE_URL || secrets.VITE_AWC_BASE_URL }}
         run: npm run build
 
       - name: Upload artifact
