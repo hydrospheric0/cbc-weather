@@ -1,6 +1,7 @@
 html, body {
   height: 100%;
   margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
 }
 
 #root {
@@ -18,25 +19,41 @@ html, body {
   height: 100%;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .topbar {
   width: 100%;
   box-sizing: border-box;
-  padding: 14px 18px;
+  height: 150px;
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
   border-bottom: 1px solid rgba(0,0,0,0.08);
-  font-weight: 700;
-  font-size: 20px;
+  font-weight: 800;
+  font-size: 32px;
+  line-height: 1.15;
   background: #111827;
   color: #f9fafb;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
 }
 
 .content {
-  width: 60%;
-  max-width: 1400px;
+  width: 86%;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 14px 0 18px;
+  padding: 10px 0 18px;
   box-sizing: border-box;
+}
+
+input, button, select, textarea {
+  font-family: inherit;
+}
+
+/* Plotly injects its own font defaults; keep it consistent with the page. */
+.js-plotly-plot, .plotly, .modebar {
+  font-family: inherit !important;
 }
 
 @media (max-width: 1100px) {
@@ -100,9 +117,15 @@ html, body {
 
 .map.mapFull {
   margin: 0;
-  height: 100vh;
-  min-height: 100vh;
+  height: 100%;
+  min-height: 0;
   border-radius: 0;
+
+  /* Map overlay sizing: keeps sidebar/search usable across screen sizes. */
+  --cbc-overlay-pad: 10px;
+  --cbc-overlay-gap: 14px;
+  --cbc-sidebar-w: clamp(380px, 45vw, 720px);
+  --cbc-search-w: clamp(280px, 22vw, 420px);
 }
 
 .map.mapFull .leaflet-container {
@@ -110,15 +133,8 @@ html, body {
 }
 
 .forecastOverlay {
-  position: absolute;
-  left: 10px;
-  bottom: 10px;
-  z-index: 1200;
-  width: min(980px, calc(100% - 20px));
-  height: 42vh;
-  min-height: 320px;
-  display: flex;
-  flex-direction: column;
+  /* legacy (forecast is now inside the left map overlay) */
+  display: none;
 }
 
 .map .leaflet-container {
@@ -133,9 +149,8 @@ html, body {
 }
 
 .plot {
-  height: 100%;
-  min-height: 0;
-  flex: 1;
+  height: 520px;
+  width: 100%;
 }
 
 .row {

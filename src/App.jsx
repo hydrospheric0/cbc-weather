@@ -1,7 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import MapPane from './components/MapPane.jsx';
-import ForecastPlot from './components/ForecastPlot.jsx';
-import SummaryTable from './components/SummaryTable.jsx';
 
 import { geocode, fetchForecast } from './lib/openMeteo.js';
 import { parseLatLon } from './lib/geo.js';
@@ -40,6 +38,13 @@ function normalizeDateToIso(raw) {
   return '';
 }
 
+function formatIsoToMdy(iso) {
+  const s = String(iso || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '';
+  const [yy, mm, dd] = s.split('-');
+  return `${mm}/${dd}/${yy}`;
+}
+
 function weathercodeToText(code) {
   const c = Number(code);
   if (!Number.isFinite(c)) return '';
@@ -50,13 +55,13 @@ function weathercodeToText(code) {
   if (c === 45 || c === 48) return 'fog';
   if (c === 51 || c === 53 || c === 55) return 'drizzle';
   if (c === 56 || c === 57) return 'freezing drizzle';
-  if (c === 61) return 'light rain';
-  if (c === 63) return 'moderate rain';
-  if (c === 65) return 'heavy intensity rain';
-  if (c === 66 || c === 67) return 'freezing rain';
+  if (c === 61) return 'light precip';
+  if (c === 63) return 'moderate precip';
+  if (c === 65) return 'heavy precip';
+  if (c === 66 || c === 67) return 'freezing precip';
   if (c === 71 || c === 73 || c === 75) return 'snow';
   if (c === 77) return 'snow grains';
-  if (c === 80 || c === 81 || c === 82) return 'rain showers';
+  if (c === 80 || c === 81 || c === 82) return 'showers';
   if (c === 85 || c === 86) return 'snow showers';
   if (c === 95 || c === 96 || c === 99) return 'thunderstorm';
   return 'weather';
@@ -69,9 +74,11 @@ export default function App() {
   const [saved, setSaved] = useState(() => loadSaved());
 
   const [selectedLocation, setSelectedLocation] = useState(null); // {lat, lon, label, bounds?, source?, circle?}
+  const selectionIdRef = React.useRef(0);
   const [forecast, setForecast] = useState(null);
   const [error, setError] = useState('');
-  // Controls the *plot window* only. The left-hand forecast list always shows 10 days.
+  const [units, setUnits] = useState('us'); // 'us' | 'metric'
+  // Controls the forecast window (3 or 8 days).
   const [forecastDays, setForecastDays] = useState(8);
 
   const [highlightDateISO, setHighlightDateISO] = useState('');
@@ -79,8 +86,15 @@ export default function App() {
   const [cbcIndex, setCbcIndex] = useState(null); // Array<{ id, name, abbrev, latitude, longitude, dateLabel, circle, miles }>
   const [cbcIndexLoading, setCbcIndexLoading] = useState(false);
 
+  const cbcIndexRef = React.useRef(null);
+  useEffect(() => {
+    cbcIndexRef.current = cbcIndex;
+  }, [cbcIndex]);
+
   const loadCbcIndex = useCallback(async () => {
-    if (cbcIndex || cbcIndexLoading) return;
+    const existing = cbcIndexRef.current;
+    if (Array.isArray(existing) && existing.length) return existing;
+    if (cbcIndexLoading) return null;
     setCbcIndexLoading(true);
     try {
       const url = new URL('../data/cbc_circles_merged.geojson', import.meta.url);
@@ -120,14 +134,16 @@ export default function App() {
       }
 
       setCbcIndex(items);
+      return items;
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error('Failed to load CBC circles index', e);
       // Don't hard-fail the app; keep normal geocoding.
+      return null;
     } finally {
       setCbcIndexLoading(false);
     }
-  }, [cbcIndex, cbcIndexLoading]);
+  }, [cbcIndexLoading]);
 
   const normalizeForSearch = useCallback((s) => {
     return String(s || '')
@@ -135,28 +151,23 @@ export default function App() {
       .replace(/[^a-z0-9]+/g, '');
   }, []);
 
-  const isSubsequence = useCallback((needle, hay) => {
-    const n = String(needle || '');
-    const h = String(hay || '');
-    if (!n) return true;
-    let j = 0;
-    for (let i = 0; i < h.length && j < n.length; i++) {
-      if (h[i] === n[j]) j++;
-    }
-    return j === n.length;
-  }, []);
-
-  const searchCbcCircles = useCallback((q) => {
+  const searchCbcCircles = useCallback((q, indexOverride = null) => {
     const rawNeedle = String(q || '').trim();
     const needle = rawNeedle.toLowerCase();
-    if (!needle || needle.length < 2 || !Array.isArray(cbcIndex)) return [];
+    const index = Array.isArray(indexOverride) ? indexOverride : cbcIndexRef.current;
+    if (!needle || needle.length < 2 || !Array.isArray(index)) return [];
 
     const needleNorm = normalizeForSearch(rawNeedle);
     if (!needleNorm || needleNorm.length < 2) return [];
 
+    const needleWords = needle.split(/[^a-z0-9]+/g).filter(Boolean);
+
     const scoreMatch = (hayRaw, kind) => {
       const hayNorm = normalizeForSearch(hayRaw);
       if (!hayNorm) return null;
+
+      const hayLower = String(hayRaw || '').toLowerCase();
+      const hayWords = hayLower.split(/[^a-z0-9]+/g).filter(Boolean);
 
       // name matches should outrank abbrev matches
       const kindPenalty = kind === 'abbrev' ? 2000 : 0;
@@ -168,15 +179,23 @@ export default function App() {
       if (idx !== -1) {
         return kindPenalty + 50 + idx;
       }
-      if (isSubsequence(needleNorm, hayNorm)) {
-        // Fuzzy partial match: allow missing chars (e.g., Tonsend ~ Townsend)
-        return kindPenalty + 250 + Math.max(0, hayNorm.length - needleNorm.length);
+
+      // Token-prefix match (e.g. "cosumnes" should match "Rio Cosumnes")
+      // Avoid overly-loose subsequence matching (e.g. Cosumnes ~ Conesus...).
+      if (needleWords.length && hayWords.length) {
+        const bestPrefixPos = hayWords
+          .map((w, i) => (w.startsWith(needle) ? i : -1))
+          .filter((i) => i >= 0)
+          .sort((a, b) => a - b)[0];
+        if (Number.isFinite(bestPrefixPos)) {
+          return kindPenalty + 120 + bestPrefixPos;
+        }
       }
       return null;
     };
 
     const scored = [];
-    for (const item of cbcIndex) {
+    for (const item of index) {
       const nameScore = scoreMatch(item.name, 'name');
       const abbrevScore = scoreMatch(item.abbrev, 'abbrev');
 
@@ -192,19 +211,18 @@ export default function App() {
       ...item,
       source: 'cbc',
     }));
-  }, [cbcIndex, normalizeForSearch, isSubsequence]);
+  }, [normalizeForSearch]);
 
   const fetchWithDays = useCallback(async (lat, lon, days) => {
     try {
-      const fc = await fetchForecast({ lat, lon, days });
+      const fc = await fetchForecast({ lat, lon, days, units });
       setForecast(fc);
     } catch (e) {
       setError(e?.message || 'Failed to fetch forecast');
     }
-  }, []);
+  }, [units]);
 
-  // Always fetch 8 days so the left list stays 8-day.
-  // The plot is filtered client-side for 3-day view.
+  // Fetch 8 days and optionally filter client-side for 3-day view.
   useEffect(() => {
     if (selectedLocation) {
       fetchWithDays(selectedLocation.lat, selectedLocation.lon, 8);
@@ -284,12 +302,17 @@ export default function App() {
     const precip = daily?.precipitation_sum?.[idx];
     const desc = weathercodeToText(daily?.weathercode?.[idx]);
 
+    const tempUnit = (forecast?.daily_units?.temperature_2m_max) || (units === 'metric' ? '°C' : '°F');
+    const precipUnitRaw = (forecast?.daily_units?.precipitation_sum) || (units === 'metric' ? 'mm' : 'in');
+    const pu = String(precipUnitRaw).toLowerCase();
+    const precipUnit = (pu === 'in' || pu === 'inch' || pu === 'inches') ? '"' : String(precipUnitRaw);
+
     const parts = [];
     if (desc) parts.push(desc);
-    if (Number.isFinite(tmax) && Number.isFinite(tmin)) parts.push(`${Math.round(tmax)} / ${Math.round(tmin)}°F`);
-    if (Number.isFinite(precip)) parts.push(`Precip: ${Number(precip).toFixed(2)}"`);
+    if (Number.isFinite(tmax) && Number.isFinite(tmin)) parts.push(`${Math.round(tmax)} / ${Math.round(tmin)}${tempUnit}`);
+    if (Number.isFinite(precip)) parts.push(precipUnit === '"' ? `Precip: ${Number(precip).toFixed(2)}"` : `Precip: ${Number(precip).toFixed(2)} ${precipUnit}`);
     return parts.join(' • ');
-  }, [countDateISO, countDatePassed, forecast]);
+  }, [countDateISO, countDatePassed, forecast, units]);
 
   const scrollToForecast = useCallback(() => {
     const el = document.getElementById('forecast-plot');
@@ -297,22 +320,99 @@ export default function App() {
   }, []);
 
   const forecastTitle = useMemo(() => {
-    if (selectedLocation?.source === 'cbc-circle') {
-      const p = selectedLocation?.circle?.properties || {};
-      const name = String(p?.Name || selectedLocation.label || '').trim();
-      const abbrev = String(p?.Abbrev || '').trim();
-      if (name && abbrev) return `Forecast - ${name} - ${abbrev}`;
-      if (name) return `Forecast - ${name}`;
-    }
-    if (selectedLocation?.label) return `Forecast - ${selectedLocation.label}`;
-    return 'Forecast';
-  }, [selectedLocation]);
+    const days = Number(forecastDays) || 8;
+    const daysLabel = `${days} day forecast`;
 
-  const onSearch = useCallback(async () => {
+    if (selectedLocation?.source !== 'cbc-circle') return daysLabel;
+    const p = selectedLocation?.circle?.properties || {};
+    const circleNameRaw = p?.Name ?? p?.CircleName ?? p?.CIRCLE_NAME ?? selectedLocation?.label ?? '';
+    const abbrevRaw = p?.Abbrev ?? p?.ABBREV ?? '';
+    const circleName = String(circleNameRaw || '').trim();
+    const abbrev = String(abbrevRaw || '').trim();
+
+    const dateISO = countDateISO || '';
+    const dateLabel = dateISO ? formatIsoToMdy(dateISO) : '';
+
+    // Requested export format: "8 day forecast - Sacramento - CASM - 12/27/2025"
+    if (!circleName && !abbrev && !dateLabel) return daysLabel;
+    return [daysLabel, circleName || 'CBC Circle', abbrev || '—', dateLabel || '—'].join(' - ');
+  }, [forecastDays, selectedLocation, countDateISO]);
+
+  const exportForecastComposite = useCallback(async () => {
+    try {
+      const Plotly = (await import('plotly.js-basic-dist-min')).default;
+      const el = document.getElementById('forecast-plot');
+      if (!el) return;
+
+      const title = String(forecastTitle || '').trim();
+      const imageUrl = await Plotly.toImage(el, { format: 'png', scale: 2 });
+
+      const img = new Image();
+      img.src = imageUrl;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+
+      const titleBlock = 64;
+      const countBlock = countDatePassed ? 130 : 0;
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = titleBlock + img.height + countBlock;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Title
+      ctx.fillStyle = '#111827';
+      ctx.font = '800 30px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
+      ctx.fillText(title || 'Forecast', 18, 40);
+
+      // Plot
+      ctx.drawImage(img, 0, titleBlock);
+
+      // Count day data
+      if (countDatePassed) {
+        let y = titleBlock + img.height + 34;
+        ctx.fillStyle = '#111827';
+        ctx.font = '800 26px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
+        ctx.fillText('Count day data', 18, y);
+
+        y += 28;
+        ctx.font = '700 20px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
+        if (countDateISO) {
+          ctx.fillText(`Count date: ${formatIsoToMdy(countDateISO)}`, 18, y);
+          y += 24;
+        }
+
+        ctx.font = '500 18px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
+        ctx.fillStyle = 'rgba(0,0,0,0.78)';
+        if (countDateWeatherSummary) {
+          ctx.fillText(countDateWeatherSummary, 18, y);
+        }
+      }
+
+      const a = document.createElement('a');
+      const filenameBase = (title || `${forecastDays}-day-forecast`).replace(/[^a-z0-9\-_. ]/gi, '').trim().replace(/\s+/g, '_');
+      a.download = `${filenameBase || 'forecast'}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Export failed', e);
+    }
+  }, [forecastTitle, forecastDays, countDatePassed, countDateISO, countDateWeatherSummary]);
+
+  const onSearch = useCallback(async (queryOverride) => {
     setError('');
     setCandidates([]);
 
-    const coords = parseLatLon(query);
+    const q = (typeof queryOverride === 'string') ? queryOverride : query;
+    const qTrim = String(q || '').trim();
+
+    const coords = parseLatLon(qTrim);
     if (coords) {
       const sel = { lat: coords.lat, lon: coords.lon, label: `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}` };
       setSelectedLocation(sel);
@@ -320,17 +420,18 @@ export default function App() {
       return;
     }
 
-    if (!query.trim()) {
+    if (!qTrim) {
       setError('Enter a place name or coordinates.');
       return;
     }
 
     // Ensure we have the CBC circles index loaded (best-effort).
-    await loadCbcIndex();
-    const cbcMatches = searchCbcCircles(query);
+    // IMPORTANT: load is async; use returned items so the first search includes CBC matches.
+    const idx = await loadCbcIndex();
+    const cbcMatches = searchCbcCircles(qTrim, idx);
 
     try {
-      const results = await geocode(query.trim(), { count: 10 });
+      const results = await geocode(qTrim, { count: 10 });
       const geoResults = results.map((r) => ({ ...r, source: 'geocode' }));
       const combined = [...cbcMatches, ...geoResults];
       setCandidates(combined);
@@ -344,6 +445,8 @@ export default function App() {
   const selectAndFetch = useCallback(async ({ lat, lon, label, bounds, source, circle, autoLocated }) => {
     setError('');
     setCandidates([]);
+
+    selectionIdRef.current += 1;
 
     let boundsValue = bounds;
     // For CBC matches selected from search, we may only have a center + radius.
@@ -368,7 +471,8 @@ export default function App() {
       bounds: boundsValue,
       source: source || 'manual',
       circle: circle || null,
-      autoLocated: Boolean(autoLocated)
+      autoLocated: Boolean(autoLocated),
+      selectionId: selectionIdRef.current,
     };
     setSelectedLocation(sel);
     // Effect will trigger fetch
@@ -430,8 +534,10 @@ export default function App() {
 
   return (
     <div className="app appFull">
+      <div className="topbar">Christmas Bird Count Weather Mapper</div>
+      <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
       <MapPane
-        appTitle="CBC weather"
+        appTitle=""
         query={query}
         setQuery={setQuery}
         onSearch={onSearch}
@@ -445,85 +551,33 @@ export default function App() {
           bounds: selectedLocation.bounds,
           label: selectedLocation.label,
           source: selectedLocation.source,
-          circle: selectedLocation.circle
+          circle: selectedLocation.circle,
+          selectionId: selectedLocation.selectionId,
         } : null}
         countDateInfo={{
           iso: countDateISO || '',
           passed: Boolean(countDatePassed),
           weatherSummary: countDateWeatherSummary || ''
         }}
+        forecastPanel={{
+          show: Boolean(showForecastOverlay),
+          title: forecastTitle,
+          forecast,
+          plotForecast,
+          forecastDays,
+          setForecastDays,
+          units,
+          setUnits,
+          highlightDateISO,
+          setHighlightDateISO,
+          extendXAxisTo: extendPlotTo,
+          plotId: 'forecast-plot',
+          onExport: exportForecastComposite,
+        }}
         onJumpToForecast={() => {}}
         onSelect={selectAndFetch}
       />
-
-      {showForecastOverlay && (
-        <div id="forecast-overlay" className="card forecastOverlay">
-          <div className="cardHeader" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-            <span>{forecastTitle}</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <span className="small" style={{ fontWeight: 600 }}>Highlight</span>
-                <input
-                  className="input"
-                  type="date"
-                  value={highlightDateISO}
-                  onChange={(e) => setHighlightDateISO(e.target.value)}
-                  style={{ width: 150, padding: '6px 8px', fontSize: 12 }}
-                  title="Highlight a day on the plot"
-                />
-              </div>
-              <button
-                className="button"
-                style={{ padding: '6px 10px', fontSize: 12, background: forecastDays === 3 ? '#e5e7eb' : '#fff', fontWeight: forecastDays === 3 ? 700 : 400 }}
-                onClick={() => setForecastDays(3)}
-                title="3-day forecast"
-              >
-                3 day
-              </button>
-              <button
-                className="button"
-                style={{ padding: '6px 10px', fontSize: 12, background: forecastDays === 8 ? '#e5e7eb' : '#fff', fontWeight: forecastDays === 8 ? 700 : 400 }}
-                onClick={() => setForecastDays(8)}
-                title="8-day forecast"
-              >
-                8 day
-              </button>
-              <button
-                className="button"
-                style={{ padding: '6px 10px', fontSize: 12 }}
-                onClick={async () => {
-                  try {
-                    const Plotly = (await import('plotly.js-dist-min')).default;
-                    const el = document.getElementById('forecast-plot');
-                    if (!el) return;
-
-                    const title = (selectedLocation?.label || '').trim();
-                    const layoutUpdate = { title: { text: title || '', x: 0.01, xanchor: 'left' } };
-                    await Plotly.relayout(el, layoutUpdate);
-
-                    const filenameBase = (title || `${forecastDays}-day-forecast`).replace(/[^a-z0-9\-_. ]/gi, '').trim().replace(/\s+/g, '_');
-                    await Plotly.downloadImage(el, { format: 'png', filename: filenameBase || 'forecast', scale: 2 });
-                  } catch (e) {
-                    // eslint-disable-next-line no-console
-                    console.error('Export failed', e);
-                  }
-                }}
-                title="Export plot"
-              >
-                Export
-              </button>
-            </div>
-          </div>
-          <div className="cardBody" style={{ flex: 1, minHeight: 0, padding: 0 }}>
-            <div style={{ padding: 12, borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-              <SummaryTable forecast={forecast} highlightDateISO={highlightDateISO || undefined} daysToShow={forecastDays} />
-            </div>
-            <div style={{ height: 'calc(100% - 82px)', minHeight: 0 }}>
-              <ForecastPlot forecast={plotForecast} highlightDateISO={highlightDateISO || undefined} extendXAxisTo={extendPlotTo} plotId="forecast-plot" />
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { MapContainer, TileLayer, LayersControl, ZoomControl, LayerGroup, Marker, Popup, Tooltip, Circle, CircleMarker, useMap, useMapEvents, GeoJSON } from 'react-leaflet';
+import { MapContainer, TileLayer, LayersControl, ZoomControl, LayerGroup, Marker, Popup, Tooltip, Circle, CircleMarker, useMap, useMapEvents, GeoJSON, Pane } from 'react-leaflet';
 import L from 'leaflet';
 import CountDayForm from './CountDayForm.jsx';
+import ForecastPlot from './ForecastPlot.jsx';
 import { dir16 } from '../lib/geo.js';
 import { approxUtcOffsetHoursFromLon, deriveCountDayPrefillFromMetars, fetchMetarsJSON, fetchStationInfoGeoJSON } from '../lib/aviationWeather.js';
 
@@ -17,23 +18,63 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-function FlyTo({ lat, lon, zoom, bounds, fitPaddingTopLeft, fitPaddingBottomRight, zoomOutAfterFit }) {
+function FlyTo({ lat, lon, zoom, bounds, source, circle, selectionId, fitPaddingTopLeft, fitPaddingBottomRight, zoomOutAfterFit }) {
   const map = useMap();
-  useEffect(() => {
-    if (bounds) {
-      map.fitBounds(bounds, {
-        paddingTopLeft: fitPaddingTopLeft,
-        paddingBottomRight: fitPaddingBottomRight,
-      });
+  const lastKeyRef = React.useRef(null);
 
-      if (zoomOutAfterFit) {
-        const next = Math.max(map.getMinZoom?.() ?? 0, (map.getZoom?.() ?? 0) - 1);
-        map.setZoom(next);
+  const computeAdjustedCenter = React.useCallback((targetLat, targetLon, targetZoom, restPointX, restPointY) => {
+    try {
+      const size = map.getSize();
+      if (!size || !Number.isFinite(size.x) || !Number.isFinite(size.y) || size.x <= 0 || size.y <= 0) {
+        return L.latLng(targetLat, targetLon);
       }
-    } else if (Number.isFinite(lat) && Number.isFinite(lon)) {
-      map.flyTo([lat, lon], zoom ?? map.getZoom(), { duration: 0.8 });
+
+      const rpX = Number.isFinite(restPointX) ? restPointX : 0.5;
+      const rpY = Number.isFinite(restPointY) ? restPointY : 0.5;
+
+      // Delta from true center (0.5, 0.5) to desired screen rest point.
+      const dx = (rpX - 0.5) * size.x;
+      const dy = (rpY - 0.5) * size.y;
+
+      const targetPoint = map.project([targetLat, targetLon], targetZoom);
+      const adjustedPoint = targetPoint.subtract([dx, dy]);
+      return map.unproject(adjustedPoint, targetZoom);
+    } catch {
+      return L.latLng(targetLat, targetLon);
     }
-  }, [lat, lon, zoom, bounds, map]);
+  }, [map]);
+
+  useEffect(() => {
+    const hasLatLon = Number.isFinite(lat) && Number.isFinite(lon);
+    if (!hasLatLon) return;
+
+    const circleKey = String(circle?.properties?.Abbrev || circle?.name || '');
+    const key = `${Number(selectionId) || 0}:${String(source || '')}:${circleKey}:${lat},${lon}`;
+    if (key === lastKeyRef.current) return;
+    lastKeyRef.current = key;
+
+    // Requested behavior: do not fit-to-bounds or variable zoom.
+    // On selection, zoom in up to a fixed 12 (never zoom out); otherwise pan only.
+    const FIXED_ZOOM = 12;
+    const current = map.getZoom?.();
+    const shouldZoomIn = Number.isFinite(current) ? current < FIXED_ZOOM : true;
+
+    const isCbcSelection = String(source || '').startsWith('cbc');
+    // Desired on-screen rest point: for CBC selections, land ~70% from left.
+    const restPointX = isCbcSelection ? 0.70 : 0.50;
+    // Move the target ~10% higher on screen.
+    const restPointY = 0.40;
+
+    if (shouldZoomIn) {
+      const adjusted = computeAdjustedCenter(lat, lon, FIXED_ZOOM, restPointX, restPointY);
+      map.setView(adjusted, FIXED_ZOOM, { animate: true, duration: 0.6 });
+      return;
+    }
+
+    const z = Number.isFinite(current) ? current : FIXED_ZOOM;
+    const adjusted = computeAdjustedCenter(lat, lon, z, restPointX, restPointY);
+    map.panTo(adjusted, { animate: true, duration: 0.6 });
+  }, [lat, lon, zoom, bounds, source, circle, selectionId, fitPaddingTopLeft, fitPaddingBottomRight, zoomOutAfterFit, map, computeAdjustedCenter]);
   return null;
 }
 
@@ -45,7 +86,7 @@ const OSM_LAYER_NAME = 'OpenStreetMap';
 const ESRI_LAYER_NAME = 'Esri Satellite';
 
 const DEFAULT_CENTER = [37.5333, -98.6833];
-const DEFAULT_ZOOM = 4;
+const DEFAULT_ZOOM = 3.5;
 
 const STATION_RADIUS_MILES = 15;
 
@@ -161,6 +202,7 @@ function ZoomSync({ onZoomChange }) {
     if (!map) return undefined;
     const update = () => onZoomChange(map.getZoom());
     update();
+
     map.on('zoomend', update);
     return () => {
       map.off('zoomend', update);
@@ -227,25 +269,6 @@ function OverlayActiveSync({ layerRef, onActiveChange }) {
   return null;
 }
 
-function FitBoundsOnce({ when, bounds }) {
-  const map = useMap();
-  const [didFit, setDidFit] = useState(false);
-
-  useEffect(() => {
-    if (didFit) return;
-    if (!when) return;
-    if (!bounds || !bounds.isValid?.()) return;
-    try {
-      map.fitBounds(bounds, { padding: [20, 20] });
-      setDidFit(true);
-    } catch {
-      // ignore
-    }
-  }, [didFit, when, bounds, map]);
-
-  return null;
-}
-
 // Auto-open popup removed: popups should open only on click.
 
 function pick(props, keys) {
@@ -267,9 +290,12 @@ export default function MapPane({
   saved,
   selected,
   countDateInfo,
+  forecastPanel,
   onJumpToForecast,
   onSelect
 }) {
+
+  const searchInputRef = React.useRef(null);
 
   const center = useMemo(() => {
     const lat = Number(selected?.lat);
@@ -315,9 +341,13 @@ export default function MapPane({
     const buffDist = pick(p, ['BUFF_DIST', 'BuffDist', 'BUFFDIST']);
     const lat = pick(p, ['Latitude', 'LATITUDE', 'Lat']);
     const lon = pick(p, ['Longitude', 'LONGITUDE', 'Lon', 'Lng']);
+    const firstName = pick(p, ['FirstName', 'first_name', 'FIRST_NAME']);
+    const lastName = pick(p, ['LastName', 'last_name', 'LAST_NAME']);
     const compiler = pick(p, ['compiler', 'Compiler']);
     const contactEmail = pick(p, ['contact_email', 'EmailAddress', 'email', 'Email']);
     const contactPhone = pick(p, ['contact_phone', 'phone', 'Phone']);
+
+    const leaderName = [firstName, lastName].filter(Boolean).join(' ').trim() || (compiler ? String(compiler) : '');
 
     return {
       circleName,
@@ -326,11 +356,13 @@ export default function MapPane({
       buffDist,
       lat,
       lon,
-      compiler,
+      leaderName,
       contactEmail,
       contactPhone
     };
   }, [selectedCircleProps]);
+
+  const hasLeftInfoPanel = Boolean(selected?.source === 'cbc-circle' && selectedCircleSummary);
 
   const selectedCircleTitle = useMemo(() => {
     if (!selectedCircleSummary) return '';
@@ -339,11 +371,11 @@ export default function MapPane({
     const rawCount = String(selectedCircleSummary.countDate || '').trim();
     const iso = normalizeDateToIso(rawCount);
     const mdy = iso ? formatIsoToMdy(iso) : '';
-
     const parts = [];
     if (name) parts.push(name);
     if (ab) parts.push(ab);
     if (mdy) parts.push(mdy);
+    else parts.push('Unknown');
     return parts.join(' - ');
   }, [selectedCircleSummary]);
 
@@ -734,6 +766,20 @@ export default function MapPane({
     return { items, featureById };
   }, [cbcGeoJson]);
 
+  const activeCbcCenterId = useMemo(() => {
+    if (selected?.source !== 'cbc-circle') return '';
+    if (!cbcCenters?.items?.length) return '';
+    const lat = Number(selected?.lat);
+    const lon = Number(selected?.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return '';
+
+    // Match by exact center coordinates (CBC circle selection uses the circle center).
+    // Tolerant compare to avoid float noise.
+    const eps = 1e-6;
+    const hit = cbcCenters.items.find((c) => Math.abs(Number(c.lat) - lat) < eps && Math.abs(Number(c.lon) - lon) < eps);
+    return hit?.id ? String(hit.id) : '';
+  }, [selected, cbcCenters]);
+
   const cbcCentersGeoJson = useMemo(() => {
     if (!cbcCenters?.items?.length) return null;
     return {
@@ -847,12 +893,17 @@ export default function MapPane({
         <div
           style={{
             position: 'absolute',
-            left: 10,
-            top: 10,
-            zIndex: 1100,
-            width: 360,
-            maxWidth: 'calc(100% - 20px)',
-            maxHeight: 'calc(100% - 20px)',
+            left: hasLeftInfoPanel
+              ? 'calc(var(--cbc-sidebar-w) + var(--cbc-overlay-gap) + var(--cbc-overlay-pad) + 30px)'
+              : 'var(--cbc-overlay-pad)',
+            right: 'auto',
+            top: 12,
+            zIndex: 1200,
+            width: 'var(--cbc-search-w)',
+            maxWidth: hasLeftInfoPanel
+              ? 'calc(100% - (var(--cbc-sidebar-w) + var(--cbc-overlay-gap) + (2 * var(--cbc-overlay-pad)) + 30px))'
+              : 'calc(100% - (2 * var(--cbc-overlay-pad)))',
+            maxHeight: '100%',
             overflow: 'auto',
             background: 'rgba(255,255,255,0.95)',
             border: '1px solid rgba(0,0,0,0.12)',
@@ -861,25 +912,47 @@ export default function MapPane({
             boxShadow: '0 6px 20px rgba(0,0,0,0.12)'
           }}
         >
-          {appTitle ? (
-            <div style={{ fontWeight: 800, fontSize: 16, lineHeight: 1.1 }}>{appTitle}</div>
-          ) : null}
-          <div className="small" style={{ fontWeight: 600, marginTop: appTitle ? 6 : 0 }}>Location search</div>
-          <div className="row" style={{ marginTop: 6 }}>
-            <input
-              className="input"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') onSearch();
-              }}
-              placeholder="Search CBC circle / place / lat,lon"
-            />
-            <button className="button" onClick={onSearch}>Search</button>
+          <div
+            style={{
+              marginTop: 0,
+              background: '#009688',
+              borderRadius: 10,
+              padding: 8
+            }}
+          >
+            <div className="small" style={{ fontWeight: 700, color: '#fff' }}>Find CBC circle</div>
+            <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input
+                ref={searchInputRef}
+                className="input"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    onSearch(e.currentTarget.value);
+                  }
+                }}
+                placeholder="Search CBC circle / place / lat,lon"
+                style={{ flex: 1, minWidth: 0 }}
+              />
+              <button
+                className="button"
+                onClick={() => onSearch(searchInputRef.current?.value ?? query)}
+                style={{
+                  width: 'auto',
+                  padding: '6px 10px',
+                  fontSize: 12,
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Search
+              </button>
+            </div>
           </div>
 
           {Array.isArray(candidates) && candidates.length > 0 && (
-            <ul className="list" style={{ marginTop: 10, maxHeight: 200 }}>
+            <ul className="list" style={{ marginTop: 10, maxHeight: 260 }}>
               {candidates.map((c) => (
                 <li
                   key={`${c.source || 'geocode'}:${c.id || ''}:${c.latitude},${c.longitude},${c.name}`}
@@ -901,85 +974,214 @@ export default function MapPane({
           )}
 
           {error && <div className="error" style={{ marginTop: 8 }}>{error}</div>}
+        </div>
 
-          {selectedCircleSummary && selected?.source === 'cbc-circle' && (
-            <div
-              style={{
-                marginTop: 10,
-                paddingTop: 10,
-                borderTop: '1px solid rgba(0,0,0,0.08)'
-              }}
-            >
-              <div style={{ fontWeight: 700, marginTop: 4 }}>
-                {selectedCircleTitle || (selectedCircleSummary.abbrev
-                  ? `${selectedCircleSummary.circleName} - ${selectedCircleSummary.abbrev}`
-                  : selectedCircleSummary.circleName)}
-              </div>
-              <div className="small" style={{ opacity: 0.85, marginTop: 2 }}>
-                {selectedCircleSummary.countDate ? (
-                  <>
-                    Count date: {selectedCircleSummary.countDate}
-                    {countDatePassed ? <span style={{ fontWeight: 700 }}> — PASSED</span> : null}
-                  </>
-                ) : ''}
+        {selectedCircleSummary && selected?.source === 'cbc-circle' && (
+          <div
+            style={{
+              position: 'absolute',
+              left: 'var(--cbc-overlay-pad)',
+              top: 12,
+              zIndex: 1100,
+              width: 'var(--cbc-sidebar-w)',
+              maxWidth: 'calc(100% - 20px)',
+              maxHeight: '100%',
+              overflow: 'auto',
+              background: 'rgba(255,255,255,0.95)',
+              border: '1px solid rgba(0,0,0,0.12)',
+              borderRadius: 10,
+              padding: 14,
+              boxShadow: '0 6px 20px rgba(0,0,0,0.12)'
+            }}
+          >
+            <div style={{ marginTop: 0 }}>
+              <div
+                style={{
+                  fontWeight: 900,
+                  marginTop: 0,
+                  fontSize: 22,
+                  lineHeight: 1.2,
+                  background: '#374151',
+                  color: '#f9fafb',
+                  padding: '10px 12px',
+                  borderRadius: 10
+                }}
+              >
+                {selectedCircleTitle || selectedCircleSummary.circleName || 'CBC Circle'}
               </div>
 
-              {(selectedCircleSummary.compiler || selectedCircleSummary.contactEmail || selectedCircleSummary.contactPhone) && (
-                <div className="small" style={{ opacity: 0.85, marginTop: 4 }}>
-                  {selectedCircleSummary.compiler ? `Compiler: ${selectedCircleSummary.compiler}` : ''}
-                  {selectedCircleSummary.compiler && (selectedCircleSummary.contactEmail || selectedCircleSummary.contactPhone) ? ' • ' : ''}
-                  {selectedCircleSummary.contactEmail ? selectedCircleSummary.contactEmail : ''}
-                  {(selectedCircleSummary.contactEmail && selectedCircleSummary.contactPhone) ? ' • ' : ''}
-                  {selectedCircleSummary.contactPhone ? selectedCircleSummary.contactPhone : ''}
+              <div style={{ paddingLeft: 22, paddingRight: 22 }}>
+                {(selectedCircleSummary.leaderName || selectedCircleSummary.contactEmail || selectedCircleSummary.contactPhone) && (
+                  <div style={{ opacity: 0.9, marginTop: 12, fontSize: 16, fontWeight: 700 }}>
+                    {selectedCircleSummary.leaderName ? selectedCircleSummary.leaderName : ''}
+                    {selectedCircleSummary.leaderName && (selectedCircleSummary.contactEmail || selectedCircleSummary.contactPhone) ? ' • ' : ''}
+                    {selectedCircleSummary.contactEmail ? selectedCircleSummary.contactEmail : ''}
+                    {(selectedCircleSummary.contactEmail && selectedCircleSummary.contactPhone) ? ' • ' : ''}
+                    {selectedCircleSummary.contactPhone ? selectedCircleSummary.contactPhone : ''}
+                  </div>
+                )}
+
+                {selectedCircleSummary.countDate && countDatePassed && countDateWeatherSummary && (
+                  <div style={{ opacity: 0.95, marginTop: 12, fontSize: 14, fontWeight: 700 }}>
+                    -{' '}
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (typeof onJumpToForecast === 'function') onJumpToForecast();
+                      }}
+                      style={{ color: 'inherit', textDecoration: 'underline' }}
+                      title="Jump to forecast plot"
+                    >
+                      {countDateWeatherSummary}
+                    </a>
+                  </div>
+                )}
+
+                <div
+                  className="small"
+                  style={{
+                    opacity: 0.9,
+                    marginTop: 12,
+                    fontSize: 14,
+                    fontWeight: 650
+                  }}
+                >
+                  {(() => {
+                    const parts = [];
+                    if (selectedCircleSummary.lat !== null && selectedCircleSummary.lon !== null) {
+                      parts.push(`Center: ${Number(selectedCircleSummary.lat).toFixed(4)}, ${Number(selectedCircleSummary.lon).toFixed(4)}`);
+                    }
+                    if (selectedCircleSummary.buffDist !== null) {
+                      parts.push(`Radius: ${selectedCircleSummary.buffDist} mi`);
+                    }
+
+                    const centerRadius = parts.join(' • ');
+                    const showStation = Boolean(stationFetch.loading || stationFetch.error || nearestStation);
+
+                    const stationText = stationFetch.loading
+                      ? 'Loading…'
+                      : stationFetch.error
+                        ? `Error: ${stationFetch.error}`
+                        : nearestStation
+                          ? `${nearestStation.icaoId}${nearestStation.site ? ` - ${nearestStation.site}` : ''} (${nearestStation.miles.toFixed(1)} mi)`
+                          : 'None found';
+
+                    return (
+                      <>
+                        {centerRadius}
+                        {showStation ? (
+                          <>
+                            {' • '}
+                            Met Station: {stationText}
+                          </>
+                        ) : null}
+                      </>
+                    );
+                  })()}
                 </div>
-              )}
-              <div className="small" style={{ opacity: 0.85, marginTop: 4 }}>
-                {(selectedCircleSummary.lat !== null && selectedCircleSummary.lon !== null)
-                  ? `Center: ${Number(selectedCircleSummary.lat).toFixed(4)}, ${Number(selectedCircleSummary.lon).toFixed(4)}`
-                  : ''}
-                {(selectedCircleSummary.lat !== null && selectedCircleSummary.lon !== null && selectedCircleSummary.buffDist !== null) ? ' • ' : ''}
-                {selectedCircleSummary.buffDist !== null ? `Radius: ${selectedCircleSummary.buffDist} mi` : ''}
               </div>
 
-              {selectedCircleSummary.countDate && countDatePassed && countDateWeatherSummary && (
-                <div className="small" style={{ opacity: 0.9, marginTop: 6 }}>
-                  -{' '}
-                  <a
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (typeof onJumpToForecast === 'function') onJumpToForecast();
+              {forecastPanel?.show && (
+                <div style={{ marginTop: 10 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 10,
+                      background: 'rgba(61,109,176,0.14)',
+                      borderRadius: 10,
+                      padding: '8px 10px'
                     }}
-                    style={{ color: 'inherit', textDecoration: 'underline' }}
-                    title="Jump to forecast plot"
                   >
-                    {countDateWeatherSummary}
-                  </a>
-                </div>
-              )}
+                    <div style={{ fontWeight: 900, fontSize: 18, lineHeight: 1.2, color: '#111827' }}>{Number(forecastPanel.forecastDays) || 8} day forecast</div>
+                    <button
+                      className="button"
+                      style={{ padding: '6px 10px', fontSize: 12, whiteSpace: 'nowrap' }}
+                      onClick={() => forecastPanel.onExport?.()}
+                      title="Export forecast"
+                    >
+                      Export
+                    </button>
+                  </div>
 
-              {selectedCircleSummary.countDate && countDatePassed && (
-                <div className="small" style={{ opacity: 0.9, marginTop: 6 }}>
-                  Station (≤ {STATION_RADIUS_MILES} mi):{' '}
-                  {stationFetch.loading
-                    ? 'Loading…'
-                    : stationFetch.error
-                      ? `Error: ${stationFetch.error}`
-                      : nearestStation
-                        ? `${nearestStation.icaoId}${nearestStation.site ? ` — ${nearestStation.site}` : ''} (${nearestStation.miles.toFixed(1)} mi)`
-                        : 'None found'}
-                  {nearestStation && (metarFetch.loading || metarFetch.error || stationPrefill) ? (
-                    <>
-                      {' • '}
-                      {metarFetch.loading
-                        ? 'Loading METARs…'
-                        : metarFetch.error
-                          ? `METAR error: ${metarFetch.error}`
-                          : stationPrefill?.used
-                            ? `METARs used: ${stationPrefill.used}`
-                            : 'No METARs'}
-                    </>
-                  ) : null}
+                  <div style={{ marginTop: 0 }}>
+                    <ForecastPlot
+                      forecast={forecastPanel.plotForecast || forecastPanel.forecast}
+                      highlightDateISO={forecastPanel.highlightDateISO || undefined}
+                      extendXAxisTo={forecastPanel.extendXAxisTo || null}
+                      plotId={forecastPanel.plotId || 'forecast-plot'}
+                    />
+                  </div>
+
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      flexWrap: 'wrap',
+                      marginTop: 4
+                    }}
+                  >
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <span className="small" style={{ fontWeight: 700 }}>Highlight</span>
+                      <input
+                        className="input"
+                        type="date"
+                        value={forecastPanel.highlightDateISO || ''}
+                        onChange={(e) => forecastPanel.setHighlightDateISO?.(e.target.value)}
+                        style={{ width: 150, padding: '6px 8px', fontSize: 12 }}
+                        title="Highlight a day on the plot"
+                      />
+                    </div>
+
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <span className="small" style={{ fontWeight: 700 }}>Units</span>
+                      <button
+                        className="button"
+                        style={{
+                          padding: '6px 10px',
+                          fontSize: 12,
+                          background: forecastPanel.units === 'metric' ? '#e5e7eb' : '#fff',
+                          fontWeight: forecastPanel.units === 'metric' ? 700 : 400
+                        }}
+                        onClick={() => forecastPanel.setUnits?.(forecastPanel.units === 'metric' ? 'us' : 'metric')}
+                        title="Toggle metric units"
+                      >
+                        {forecastPanel.units === 'metric' ? 'Metric' : 'US'}
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <span className="small" style={{ fontWeight: 700 }}>Days</span>
+                      <button
+                        className="button"
+                        style={{ padding: '6px 10px', fontSize: 12, background: forecastPanel.forecastDays === 3 ? '#e5e7eb' : '#fff', fontWeight: forecastPanel.forecastDays === 3 ? 700 : 400 }}
+                        onClick={() => forecastPanel.setForecastDays?.(3)}
+                        title="Show 3-day forecast"
+                      >
+                        3
+                      </button>
+                      <button
+                        className="button"
+                        style={{ padding: '6px 10px', fontSize: 12, background: forecastPanel.forecastDays === 8 ? '#e5e7eb' : '#fff', fontWeight: forecastPanel.forecastDays === 8 ? 700 : 400 }}
+                        onClick={() => forecastPanel.setForecastDays?.(8)}
+                        title="Show 8-day forecast"
+                      >
+                        8
+                      </button>
+                    </div>
+
+                  </div>
+
+                  {countDatePassed && (
+                    <div style={{ marginTop: 6, paddingTop: 6, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+                      {countDateWeatherSummary ? (
+                        <div style={{ fontSize: 14 }}>{countDateWeatherSummary}</div>
+                      ) : null}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -990,23 +1192,37 @@ export default function MapPane({
                 dateISO={countDateISO}
                 prefill={stationPrefill?.patch || null}
               />
-            </div>
-          )}
 
-          {isRainViewerActive && rainViewerTimestampLabel && (
-            <div className="small" style={{ marginTop: 8, opacity: 0.85 }}>
-              Radar time: {rainViewerTimestampLabel}
+              <hr style={{ border: 0, borderTop: '1px solid rgba(0,0,0,0.12)', marginTop: 14, marginBottom: 10 }} />
+              <div className="small" style={{ opacity: 0.85, lineHeight: 1.35 }}>
+                <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
+                  Weather data by Open-Meteo.com
+                </a>
+                {' • '}
+                <a href="https://gis.audubon.org/christmasbirdcount/" target="_blank" rel="noreferrer">
+                  CBC circles by National Audubon Society
+                </a>
+                {' • '}
+                <span>Developed by [redacted], 2026</span>
+              </div>
             </div>
-          )}
-        </div>
+
+            {isRainViewerActive && rainViewerTimestampLabel && (
+              <div className="small" style={{ marginTop: 8, opacity: 0.85 }}>
+                Radar time: {rainViewerTimestampLabel}
+              </div>
+            )}
+          </div>
+        )}
 
         <MapContainer
           key={mapKey}
           center={center}
-          zoom={selected ? 11 : DEFAULT_ZOOM}
+          zoom={DEFAULT_ZOOM}
           zoomControl={false}
           zoomSnap={0.25}
           zoomDelta={0.25}
+          wheelPxPerZoomLevel={240}
           style={{ height: '100%', width: '100%' }}
         >
           <ZoomControl position="bottomright" />
@@ -1039,7 +1255,11 @@ export default function MapPane({
                         key={`cbc-circle-${c.id}`}
                         center={[c.lat, c.lon]}
                         radius={c.radiusMeters}
-                        pathOptions={circleStyle}
+                        pathOptions={{
+                          ...circleStyle,
+                          color: (activeCbcCenterId && String(c.id) === String(activeCbcCenterId)) ? '#f97316' : circleStyle.color,
+                          weight: (activeCbcCenterId && String(c.id) === String(activeCbcCenterId)) ? 5 : circleStyle.weight
+                        }}
                         interactive={false}
                       >
                         <Tooltip direction="top" opacity={0.9} sticky>
@@ -1134,8 +1354,11 @@ export default function MapPane({
             <FlyTo
               lat={selected.lat}
               lon={selected.lon}
-              zoom={selected.source === 'cbc-point' ? undefined : 11}
+              zoom={selected.source === 'cbc-point' ? undefined : 10}
               bounds={selected.bounds}
+              source={selected.source}
+              circle={selected.circle || null}
+              selectionId={selected.selectionId}
               fitPaddingTopLeft={[420, 20]}
               fitPaddingBottomRight={[20, 20]}
               zoomOutAfterFit={Boolean(selected.autoLocated) && Boolean(selected.bounds) && selected.source !== 'cbc-point'}
@@ -1166,44 +1389,47 @@ export default function MapPane({
           )}
 
           {selectedCircleCenter && Array.isArray(stations15mi) && stations15mi.length > 0 && (
-            <LayerGroup>
-              {stations15mi.map((st) => {
-                const isNearest = String(nearestStation?.icaoId || '') === String(st.icaoId || '');
-                return (
-                  <CircleMarker
-                    key={`st-${st.icaoId}-${st.lat}-${st.lon}`}
-                    center={[st.lat, st.lon]}
-                    radius={isNearest ? 7 : 5}
-                    pathOptions={{
-                      color: '#3b82f6',
-                      weight: isNearest ? 3 : 2,
-                      opacity: 1,
-                      fillColor: '#3b82f6',
-                      fillOpacity: 0.85,
-                    }}
-                    bubblingMouseEvents={false}
-                  >
-                    <Popup autoPan={false}>
-                      <div style={{ minWidth: 220 }}>
-                        <div style={{ fontWeight: 700 }}>{st.icaoId}</div>
-                        {st.site ? <div style={{ fontSize: 12, opacity: 0.8 }}>{st.site}</div> : null}
-                        <div style={{ marginTop: 6, fontSize: 12 }}>
-                          {st.miles.toFixed(1)} mi from circle center
-                        </div>
-                        <div style={{ fontSize: 12, opacity: 0.8 }}>
-                          {st.lat.toFixed(4)}, {st.lon.toFixed(4)}
-                        </div>
-                        {isNearest ? (
+            <Pane name="stationsPane" style={{ zIndex: 650 }}>
+              <LayerGroup>
+                {stations15mi.map((st) => {
+                  const isNearest = String(nearestStation?.icaoId || '') === String(st.icaoId || '');
+                  return (
+                    <CircleMarker
+                      key={`st-${st.icaoId}-${st.lat}-${st.lon}`}
+                      pane="stationsPane"
+                      center={[st.lat, st.lon]}
+                      radius={isNearest ? 7 : 5}
+                      pathOptions={{
+                        color: '#3b82f6',
+                        weight: isNearest ? 3 : 2,
+                        opacity: 1,
+                        fillColor: '#3b82f6',
+                        fillOpacity: 0.85,
+                      }}
+                      bubblingMouseEvents={false}
+                    >
+                      <Popup autoPan={false}>
+                        <div style={{ minWidth: 220 }}>
+                          <div style={{ fontWeight: 700 }}>{st.icaoId}</div>
+                          {st.site ? <div style={{ fontSize: 12, opacity: 0.8 }}>{st.site}</div> : null}
                           <div style={{ marginTop: 6, fontSize: 12 }}>
-                            Nearest station used for observations
+                            {st.miles.toFixed(1)} mi from circle center
                           </div>
-                        ) : null}
-                      </div>
-                    </Popup>
-                  </CircleMarker>
-                );
-              })}
-            </LayerGroup>
+                          <div style={{ fontSize: 12, opacity: 0.8 }}>
+                            {st.lat.toFixed(4)}, {st.lon.toFixed(4)}
+                          </div>
+                          {isNearest ? (
+                            <div style={{ marginTop: 6, fontSize: 12 }}>
+                              Nearest station used for observations
+                            </div>
+                          ) : null}
+                        </div>
+                      </Popup>
+                    </CircleMarker>
+                  );
+                })}
+              </LayerGroup>
+            </Pane>
           )}
 
           {cbcPoint && isFiniteNumber(cbcPoint.lat) && isFiniteNumber(cbcPoint.lon) && (

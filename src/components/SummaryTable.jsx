@@ -61,7 +61,7 @@ export default function SummaryTable({ forecast, highlightDateISO, daysToShow = 
   const temperature_2m_min = daily?.temperature_2m_min;
   const weathercode = daily?.weathercode;
 
-  const n = Math.max(1, Math.min(8, Number(daysToShow) || 8));
+  const n = Math.max(1, Math.min(10, Number(daysToShow) || 10));
   const days = Array.isArray(time) ? time.slice(0, n) : [];
 
   return (
@@ -111,6 +111,7 @@ export default function SummaryTable({ forecast, highlightDateISO, daysToShow = 
             <img
               src={iconUrl}
               alt={desc}
+              crossOrigin="anonymous"
               width={24}
               height={24}
               style={{ display: 'block' }}

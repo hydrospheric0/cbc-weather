@@ -35,7 +35,7 @@ export default function Sidebar({
     <div className="card sidebar">
       <div className="cardHeader">Navigation</div>
       <div className="cardBody">
-        <div className="small" style={{ fontWeight: 600 }}>Location search</div>
+        <div className="small" style={{ fontWeight: 600 }}>Find CBC circle</div>
         <div className="small" style={{ marginTop: 2 }}>Name / place / lat,lon</div>
         <div className="row" style={{ marginTop: 6 }}>
           <input
@@ -44,7 +44,13 @@ export default function Sidebar({
             onChange={(e) => setQuery(e.target.value)}
             placeholder="e.g. Vacaville CA or 38.3761, -121.9607"
           />
-          <button className="button" onClick={onSearch}>Search</button>
+          <button
+            className="button"
+            onClick={onSearch}
+            style={{ padding: '6px 10px', fontSize: 12, whiteSpace: 'nowrap' }}
+          >
+            Search
+          </button>
         </div>
         {parsed && (
           <div className="small" style={{ marginTop: 6 }}>
