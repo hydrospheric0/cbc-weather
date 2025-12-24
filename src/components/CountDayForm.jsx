@@ -139,7 +139,7 @@ function SelectField({ label, value, options, onChange }) {
   );
 }
 
-export default function CountDayForm({ circleName, abbrev, dateISO, enabled, prefill }) {
+export default function CountDayForm({ circleName, abbrev, dateISO, enabled, prefill, dataStatus = 'idle' }) {
   const storageKey = useMemo(() => makeKey({ circleName, abbrev, dateISO }), [circleName, abbrev, dateISO]);
 
   const [all, setAll] = useState(() => loadAll());
@@ -284,7 +284,14 @@ export default function CountDayForm({ circleName, abbrev, dateISO, enabled, pre
         }}
       >
         <div style={{ fontWeight: 900, fontSize: 16, lineHeight: 1.2, color: '#111827' }}>Weather report</div>
-        <button className="button" style={{ padding: '6px 10px', fontSize: 12 }} onClick={onSave}>Save</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {dataStatus === 'loading' ? (
+            <div className="loadingSpinner" title="Loading…" aria-label="Loading" />
+          ) : dataStatus === 'notfound' ? (
+            <div className="small" style={{ opacity: 0.75 }}>Data not found</div>
+          ) : null}
+          <button className="button" style={{ padding: '6px 10px', fontSize: 12 }} onClick={onSave}>Save</button>
+        </div>
       </div>
 
       <div style={{ paddingLeft: 22, paddingRight: 22 }}>

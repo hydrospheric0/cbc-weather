@@ -44,6 +44,36 @@ html, body {
   padding-right: 10px;
 }
 
+.footerbar {
+  width: 100%;
+  box-sizing: border-box;
+  height: 100px;
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  border-top: 1px solid rgba(0,0,0,0.08);
+  background: #111827;
+  color: #f9fafb;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}
+
+.footerLink {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.footerLink:hover {
+  opacity: 0.9;
+}
+
+.bmcButton {
+  height: 44px;
+  width: auto;
+  display: block;
+}
+
 .infoButton {
   width: 34px;
   height: 34px;
@@ -150,6 +180,19 @@ html, body {
 .sponsorButton {
   display: inline-block;
   text-decoration: none;
+}
+
+.loadingSpinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid rgba(0,0,0,0.22);
+  border-top-color: rgba(0,0,0,0.65);
+  animation: cbcSpin 0.9s linear infinite;
+}
+
+@keyframes cbcSpin {
+  to { transform: rotate(360deg); }
 }
 
 .content {
