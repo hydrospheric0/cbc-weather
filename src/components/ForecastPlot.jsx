@@ -138,8 +138,11 @@ export default function ForecastPlot({ forecast, highlightDateISO, extendXAxisTo
     const rainUnit = (forecast?.daily_units?.rain_sum) || (forecast?.daily_units?.precipitation_sum) || (forecast?.hourly_units?.rain) || 'in';
     const windUnit = (forecast?.hourly_units?.wind_speed_10m) || (forecast?.daily_units?.wind_speed_10m_max) || 'mph';
 
-    const ru = String(rainUnit).toLowerCase();
-    const precipUnitLabel = (ru === 'in' || ru === 'inch' || ru === 'inches') ? '"' : String(rainUnit);
+    const ru = String(rainUnit).toLowerCase().trim();
+    const precipUnitLabel = (ru === 'in' || ru === 'inch' || ru === 'inches' || ru === '"') ? 'in' : String(rainUnit);
+
+    const wu = String(windUnit).toLowerCase().replace(/\s+/g, '');
+    const windUnitLabel = (wu === 'mph' || wu === 'mi/h' || wu === 'miph') ? 'mph' : String(windUnit);
 
     const dailyTimes = forecast?.daily?.time;
     const dailyTmax = forecast?.daily?.temperature_2m_max;
@@ -176,12 +179,10 @@ export default function ForecastPlot({ forecast, highlightDateISO, extendXAxisTo
           : '';
 
         const rPart = (rainTotal !== null && Number.isFinite(rainTotal))
-          ? (precipUnitLabel === '"'
-            ? `${rainTotal.toFixed(2)} \"`
-            : `${rainTotal.toFixed(2)} ${precipUnitLabel}`)
+          ? `${rainTotal.toFixed(2)} ${precipUnitLabel}`
           : '';
 
-        const wPart = Number.isFinite(windMax) ? `${Math.round(windMax)} ${windUnit}` : '';
+        const wPart = Number.isFinite(windMax) ? `${Math.round(windMax)} ${windUnitLabel}` : '';
         const dPart = Number.isFinite(windDir) ? dir16(windDir) : '';
 
         const lines = [tPart, rPart, wPart, dPart].filter((s) => String(s).trim() !== '');
@@ -193,11 +194,11 @@ export default function ForecastPlot({ forecast, highlightDateISO, extendXAxisTo
           xref: 'x',
           yref: 'paper',
           x,
-          y: 1.21,
+          y: 1.25,
           xanchor: 'center',
           yanchor: 'bottom',
-          sizex: 10 * 60 * 60 * 1000,
-          sizey: 0.14,
+          sizex: 11 * 60 * 60 * 1000,
+          sizey: 0.16,
           sizing: 'contain',
           opacity: 1.0,
           layer: 'above'
@@ -260,7 +261,7 @@ export default function ForecastPlot({ forecast, highlightDateISO, extendXAxisTo
           y: wind,
           type: 'scatter',
           mode: 'lines',
-          name: `Speed (${windUnit})`,
+          name: `Speed (${windUnitLabel})`,
           line: { width: 2 },
           opacity: 0.85,
           xaxis: 'x2',
@@ -347,7 +348,7 @@ export default function ForecastPlot({ forecast, highlightDateISO, extendXAxisTo
           }
         },
         yaxis3: {
-          title: `Speed (${windUnit})`,
+          title: `Speed (${windUnitLabel})`,
           domain: [0.0, 0.46],
           rangemode: 'tozero',
           showgrid: true,
