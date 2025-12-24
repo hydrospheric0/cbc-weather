@@ -959,7 +959,7 @@ export default function MapPane({
                 <li
                   key={`${c.source || 'geocode'}:${c.id || ''}:${c.latitude},${c.longitude},${c.name}`}
                   className="listItem"
-                  style={{ backgroundColor: c.source === 'cbc' ? 'rgba(255, 255, 0, 0.25)' : 'transparent' }}
+                  style={{ backgroundColor: c.source === 'cbc' ? 'rgba(0, 150, 136, 0.18)' : 'transparent' }}
                   onClick={() => onSelectCandidate(c)}
                   title="Click to select & fetch forecast"
                 >
@@ -1003,7 +1003,7 @@ export default function MapPane({
                   marginTop: 0,
                   fontSize: 22,
                   lineHeight: 1.2,
-                  background: '#374151',
+                  background: '#009688',
                   color: '#f9fafb',
                   padding: '10px 12px',
                   borderRadius: 10

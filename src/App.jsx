@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import MapPane from './components/MapPane.jsx';
+import AboutModal from './components/AboutModal.jsx';
 
 import { geocode, fetchForecast } from './lib/openMeteo.js';
 import { parseLatLon } from './lib/geo.js';
@@ -69,6 +70,8 @@ function weathercodeToText(code) {
 
 export default function App() {
   const [query, setQuery] = useState('');
+
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   const [candidates, setCandidates] = useState([]);
   const [saved, setSaved] = useState(() => loadSaved());
@@ -540,7 +543,18 @@ export default function App() {
 
   return (
     <div className="app appFull">
-      <div className="topbar">Christmas Bird Count Weather Mapper</div>
+      <div className="topbar">
+        <div className="topbarTitle">Christmas Bird Count Weather Mapper</div>
+        <button
+          type="button"
+          className="infoButton"
+          aria-label="About this tool"
+          onClick={() => setAboutOpen(true)}
+        >
+          i
+        </button>
+      </div>
+      <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
       <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
       <MapPane
         appTitle=""
