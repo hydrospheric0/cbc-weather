@@ -24,7 +24,7 @@ export async function geocode(query, { count = 10 } = {}) {
   }));
 }
 
-export async function fetchForecast({ lat, lon, days = 3 }) {
+export async function fetchForecast({ lat, lon, days = 3, units = 'us' }) {
   const url = new URL(FORECAST_URL);
   url.searchParams.set('latitude', String(lat));
   url.searchParams.set('longitude', String(lon));
@@ -45,9 +45,18 @@ export async function fetchForecast({ lat, lon, days = 3 }) {
     'wind_speed_10m_max',
     'wind_direction_10m_dominant'
   ].join(','));
-  url.searchParams.set('temperature_unit', 'fahrenheit');
-  url.searchParams.set('wind_speed_unit', 'mph');
-  url.searchParams.set('precipitation_unit', 'inch');
+
+  const u = String(units || 'us').toLowerCase();
+  if (u === 'metric') {
+    url.searchParams.set('temperature_unit', 'celsius');
+    url.searchParams.set('wind_speed_unit', 'kmh');
+    url.searchParams.set('precipitation_unit', 'mm');
+  } else {
+    // Default: US customary
+    url.searchParams.set('temperature_unit', 'fahrenheit');
+    url.searchParams.set('wind_speed_unit', 'mph');
+    url.searchParams.set('precipitation_unit', 'inch');
+  }
   url.searchParams.set('timezone', 'auto');
   url.searchParams.set('forecast_days', String(days));
 

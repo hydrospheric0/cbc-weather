@@ -82,7 +82,7 @@ function mergePrefillIntoForm(current, prefill) {
   return next;
 }
 
-function RadioRow({ label, value, options, onChange }) {
+function RadioRow({ label, name, value, options, onChange }) {
   return (
     <div style={{ marginTop: 6 }}>
       <div className="small" style={{ fontWeight: 600 }}>{label}</div>
@@ -91,7 +91,7 @@ function RadioRow({ label, value, options, onChange }) {
           <label key={opt} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
             <input
               type="radio"
-              name={label}
+              name={name || label}
               value={opt}
               checked={value === opt}
               onChange={() => onChange(opt)}
@@ -270,71 +270,89 @@ export default function CountDayForm({ circleName, abbrev, dateISO, enabled, pre
   };
 
   return (
-    <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <div className="small" style={{ fontWeight: 700 }}>Weather report</div>
+    <div style={{ marginTop: 10 }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 10,
+          background: 'rgba(61,109,176,0.14)',
+          border: '1px solid rgba(61,109,176,0.25)',
+          borderRadius: 10,
+          padding: '8px 10px'
+        }}
+      >
+        <div style={{ fontWeight: 900, fontSize: 16, lineHeight: 1.2, color: '#111827' }}>Weather report</div>
         <button className="button" style={{ padding: '6px 10px', fontSize: 12 }} onClick={onSave}>Save</button>
       </div>
 
-      {existing?.savedAtISO && (
-        <div className="small" style={{ opacity: 0.75, marginTop: 4 }}>
-          Saved: {new Date(existing.savedAtISO).toLocaleString()}
-        </div>
-      )}
+      <div style={{ paddingLeft: 22, paddingRight: 22 }}>
+        {existing?.savedAtISO && (
+          <div className="small" style={{ opacity: 0.75, marginTop: 4 }}>
+            Saved: {new Date(existing.savedAtISO).toLocaleString()}
+          </div>
+        )}
 
-      <div style={{ marginTop: 10 }}>
-        <div className="small" style={{ fontWeight: 700, marginBottom: 6 }}>Temperature (°F)</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <NumberField label="Minimum" value={form.tempMinF} onChange={(v) => set({ tempMinF: v })} placeholder="min" />
-          <NumberField label="Maximum" value={form.tempMaxF} onChange={(v) => set({ tempMaxF: v })} placeholder="max" />
-        </div>
-      </div>
-
-      <div style={{ marginTop: 10 }}>
-        <div className="small" style={{ fontWeight: 700, marginBottom: 6 }}>Wind</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <SelectField label="Direction" value={form.windDir} options={WIND_DIRS} onChange={(v) => set({ windDir: v })} />
+        <div style={{ marginTop: 10 }}>
+          <div className="small" style={{ fontWeight: 700, marginBottom: 6 }}>Temperature (°F)</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <NumberField label="Minimum" value={form.tempMinF} onChange={(v) => set({ tempMinF: v })} placeholder="min" />
+            <NumberField label="Maximum" value={form.tempMaxF} onChange={(v) => set({ tempMaxF: v })} placeholder="max" />
+          </div>
+        </div>
+
+        <div style={{ marginTop: 10 }}>
+          <div className="small" style={{ fontWeight: 700, marginBottom: 6 }}>Wind</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <SelectField label="Direction" value={form.windDir} options={WIND_DIRS} onChange={(v) => set({ windDir: v })} />
+            <div />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
             <NumberField label="Min (mph)" value={form.windMinMph} onChange={(v) => set({ windMinMph: v })} placeholder="min" />
             <NumberField label="Max (mph)" value={form.windMaxMph} onChange={(v) => set({ windMaxMph: v })} placeholder="max" />
           </div>
         </div>
-      </div>
 
-      <div style={{ marginTop: 10 }}>
-        <div className="small" style={{ fontWeight: 700, marginBottom: 6 }}>Snow Depth (in)</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <NumberField label="Minimum" value={form.snowMinIn} onChange={(v) => set({ snowMinIn: v })} placeholder="min" />
-          <NumberField label="Maximum" value={form.snowMaxIn} onChange={(v) => set({ snowMaxIn: v })} placeholder="max" />
+        <div style={{ marginTop: 10 }}>
+          <div className="small" style={{ fontWeight: 700, marginBottom: 6 }}>Snow Depth (in)</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <NumberField label="Minimum" value={form.snowMinIn} onChange={(v) => set({ snowMinIn: v })} placeholder="min" />
+            <NumberField label="Maximum" value={form.snowMaxIn} onChange={(v) => set({ snowMaxIn: v })} placeholder="max" />
+          </div>
         </div>
-      </div>
 
-      <div style={{ marginTop: 10 }}>
-        <div className="small" style={{ fontWeight: 700, marginBottom: 6 }}>Water</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <SelectField label="Still Water" value={form.stillWater} options={WATER} onChange={(v) => set({ stillWater: v })} />
-          <SelectField label="Moving Water" value={form.movingWater} options={WATER} onChange={(v) => set({ movingWater: v })} />
+        <div style={{ marginTop: 10 }}>
+          <div className="small" style={{ fontWeight: 700, marginBottom: 6 }}>Water</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <SelectField label="Still Water" value={form.stillWater} options={WATER} onChange={(v) => set({ stillWater: v })} />
+            <SelectField label="Moving Water" value={form.movingWater} options={WATER} onChange={(v) => set({ movingWater: v })} />
+          </div>
         </div>
-      </div>
 
-      <div style={{ marginTop: 10 }}>
-        <div className="small" style={{ fontWeight: 700 }}>Cloud Cover</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 6 }}>
-          <SelectField label="AM" value={form.cloudCoverAM} options={CLOUD_COVER} onChange={(v) => set({ cloudCoverAM: v })} />
-          <SelectField label="PM" value={form.cloudCoverPM} options={CLOUD_COVER} onChange={(v) => set({ cloudCoverPM: v })} />
+        <div style={{ marginTop: 10 }}>
+          <div className="small" style={{ fontWeight: 700 }}>Cloud Cover</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 6 }}>
+            <SelectField label="AM" value={form.cloudCoverAM} options={CLOUD_COVER} onChange={(v) => set({ cloudCoverAM: v })} />
+            <SelectField label="PM" value={form.cloudCoverPM} options={CLOUD_COVER} onChange={(v) => set({ cloudCoverPM: v })} />
+          </div>
         </div>
-      </div>
 
-      <div style={{ marginTop: 10 }}>
-        <div className="small" style={{ fontWeight: 700 }}>Select all conditions existing during the morning</div>
-        <RadioRow label="AM Rain" value={form.amRain} options={INTENSITY} onChange={(v) => set({ amRain: v })} />
-        <RadioRow label="AM Snow" value={form.amSnow} options={INTENSITY} onChange={(v) => set({ amSnow: v })} />
-      </div>
+        <div style={{ marginTop: 10 }}>
+          <div className="small" style={{ fontWeight: 700, marginBottom: 6 }}>Rain</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <RadioRow name="amRain" label="AM" value={form.amRain} options={INTENSITY} onChange={(v) => set({ amRain: v })} />
+            <RadioRow name="pmRain" label="PM" value={form.pmRain} options={INTENSITY} onChange={(v) => set({ pmRain: v })} />
+          </div>
+        </div>
 
-      <div style={{ marginTop: 10 }}>
-        <div className="small" style={{ fontWeight: 700 }}>Select all conditions existing during the afternoon</div>
-        <RadioRow label="PM Rain" value={form.pmRain} options={INTENSITY} onChange={(v) => set({ pmRain: v })} />
-        <RadioRow label="PM Snow" value={form.pmSnow} options={INTENSITY} onChange={(v) => set({ pmSnow: v })} />
+        <div style={{ marginTop: 10 }}>
+          <div className="small" style={{ fontWeight: 700, marginBottom: 6 }}>Snow</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <RadioRow name="amSnow" label="AM" value={form.amSnow} options={INTENSITY} onChange={(v) => set({ amSnow: v })} />
+            <RadioRow name="pmSnow" label="PM" value={form.pmSnow} options={INTENSITY} onChange={(v) => set({ pmSnow: v })} />
+          </div>
+        </div>
       </div>
     </div>
   );
