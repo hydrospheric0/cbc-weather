@@ -363,7 +363,9 @@ export default function MapPane({
     };
   }, [selectedCircleProps]);
 
-  const hasLeftInfoPanel = Boolean(selected?.source === 'cbc-circle' && selectedCircleSummary);
+  const isCbcCircleSelection = selected?.source === 'cbc-circle';
+  const showLeftInfoPanel = Boolean(selected && (isCbcCircleSelection ? selectedCircleSummary : true));
+  const hasLeftInfoPanel = showLeftInfoPanel;
 
   const selectedCircleTitle = useMemo(() => {
     if (!selectedCircleSummary) return '';
@@ -379,6 +381,11 @@ export default function MapPane({
     else parts.push('Unknown');
     return parts.join(' - ');
   }, [selectedCircleSummary]);
+
+  const customLocationTitle = useMemo(() => {
+    if (!selected || isCbcCircleSelection) return '';
+    return 'Custom location';
+  }, [selected, isCbcCircleSelection]);
 
   const countDatePassed = Boolean(countDateInfo?.passed);
   const countDateWeatherSummary = String(countDateInfo?.weatherSummary || '').trim();
@@ -397,6 +404,15 @@ export default function MapPane({
   const [stationFetch, setStationFetch] = useState({ loading: false, error: '' });
   const [metarFetch, setMetarFetch] = useState({ loading: false, error: '' });
   const [stationPrefill, setStationPrefill] = useState(null); // { patch, used, stationId }
+
+  const countDayFormEnabled = Boolean(selectedCircleSummary?.countDate) && countDatePassed && Boolean(countDateISO);
+  const countDayDataStatus = useMemo(() => {
+    if (!countDayFormEnabled) return 'idle';
+    if (stationFetch.loading || metarFetch.loading) return 'loading';
+    if (stationFetch.error || metarFetch.error) return 'idle';
+    if (stationPrefill?.patch && typeof stationPrefill.patch === 'object') return 'ready';
+    return 'notfound';
+  }, [countDayFormEnabled, stationFetch.loading, metarFetch.loading, stationFetch.error, metarFetch.error, stationPrefill]);
 
   useEffect(() => {
     setStations15mi([]);
@@ -509,42 +525,9 @@ export default function MapPane({
   }, [rainViewerTimestamp]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function refreshRainViewer() {
-      try {
-        const res = await fetch('https://api.rainviewer.com/public/weather-maps.json', { cache: 'no-store' });
-        if (!res.ok) return;
-        const data = await res.json();
-
-        const host = typeof data?.host === 'string' ? data.host : null;
-        const past = Array.isArray(data?.radar?.past) ? data.radar.past : [];
-        const nowcast = Array.isArray(data?.radar?.nowcast) ? data.radar.nowcast : [];
-
-        const frames = [
-          ...past.map((f) => ({ time: Number(f?.time), path: String(f?.path || ''), kind: 'past' })),
-          ...nowcast.map((f) => ({ time: Number(f?.time), path: String(f?.path || ''), kind: 'nowcast' })),
-        ].filter((f) => Number.isFinite(f.time) && f.time > 0 && f.path.startsWith('/'));
-
-        if (cancelled) return;
-
-        if (host) setRainViewerHost(host);
-        setRainViewerFrames(frames);
-
-        // Default to latest available frame.
-        const last = frames.length ? frames[frames.length - 1].time : null;
-        if (Number.isFinite(last)) setRainViewerTimestamp(last);
-      } catch {
-        // ignore
-      }
-    }
-
-    // Initial fetch so the overlay is ready quickly.
-    refreshRainViewer();
-
-    return () => {
-      cancelled = true;
-    };
+    // Intentionally no initial RainViewer API fetch here.
+    // This avoids metered usage unless the radar overlay is enabled.
+    return undefined;
   }, []);
 
   useEffect(() => {
@@ -582,7 +565,7 @@ export default function MapPane({
     };
 
     refresh();
-    intervalId = window.setInterval(refresh, 5 * 60 * 1000);
+    intervalId = window.setInterval(refresh, 10 * 60 * 1000);
 
     return () => {
       cancelled = true;
@@ -978,7 +961,7 @@ export default function MapPane({
           {error && <div className="error" style={{ marginTop: 8 }}>{error}</div>}
         </div>
 
-        {selectedCircleSummary && selected?.source === 'cbc-circle' && (
+        {showLeftInfoPanel && (
           <div
             style={{
               position: 'absolute',
@@ -1009,11 +992,13 @@ export default function MapPane({
                   borderRadius: 10
                 }}
               >
-                {selectedCircleTitle || selectedCircleSummary.circleName || 'CBC Circle'}
+                {isCbcCircleSelection
+                  ? (selectedCircleTitle || selectedCircleSummary?.circleName || 'CBC Circle')
+                  : (customLocationTitle || 'Custom location:')}
               </div>
 
               <div style={{ paddingLeft: 22, paddingRight: 22 }}>
-                {(selectedCircleSummary.leaderName || selectedCircleSummary.contactEmail || selectedCircleSummary.contactPhone) && (
+                {isCbcCircleSelection && (selectedCircleSummary?.leaderName || selectedCircleSummary?.contactEmail || selectedCircleSummary?.contactPhone) && (
                   <div style={{ opacity: 0.9, marginTop: 12, fontSize: 16, fontWeight: 700 }}>
                     {selectedCircleSummary.leaderName ? `Contact: ${selectedCircleSummary.leaderName}` : ''}
                     {selectedCircleSummary.leaderName && (selectedCircleSummary.contactEmail || selectedCircleSummary.contactPhone) ? ' • ' : ''}
@@ -1023,7 +1008,7 @@ export default function MapPane({
                   </div>
                 )}
 
-                {selectedCircleSummary.countDate && countDatePassed && countDateWeatherSummary && (
+                {isCbcCircleSelection && selectedCircleSummary?.countDate && countDatePassed && countDateWeatherSummary && (
                   <div style={{ opacity: 0.95, marginTop: 12, fontSize: 14, fontWeight: 700 }}>
                     -{' '}
                     <a
@@ -1051,15 +1036,23 @@ export default function MapPane({
                 >
                   {(() => {
                     const parts = [];
-                    if (selectedCircleSummary.lat !== null && selectedCircleSummary.lon !== null) {
-                      parts.push(`Center: ${Number(selectedCircleSummary.lat).toFixed(4)}, ${Number(selectedCircleSummary.lon).toFixed(4)}`);
-                    }
-                    if (selectedCircleSummary.buffDist !== null) {
-                      parts.push(`Radius: ${selectedCircleSummary.buffDist} mi`);
+                    if (isCbcCircleSelection) {
+                      if (selectedCircleSummary?.lat !== null && selectedCircleSummary?.lon !== null) {
+                        parts.push(`Center: ${Number(selectedCircleSummary.lat).toFixed(4)}, ${Number(selectedCircleSummary.lon).toFixed(4)}`);
+                      }
+                      if (selectedCircleSummary?.buffDist !== null) {
+                        parts.push(`Radius: ${selectedCircleSummary.buffDist} mi`);
+                      }
+                    } else {
+                      const lat = Number(selected?.lat);
+                      const lon = Number(selected?.lon);
+                      if (Number.isFinite(lat) && Number.isFinite(lon)) {
+                        parts.push(`Center: ${lon.toFixed(4)}, ${lat.toFixed(4)}`);
+                      }
                     }
 
                     const centerRadius = parts.join(' • ');
-                    const showStation = countDatePassed && Boolean(stationFetch.loading || stationFetch.error || nearestStation);
+                    const showStation = isCbcCircleSelection && countDatePassed && Boolean(stationFetch.loading || stationFetch.error || nearestStation);
 
                     const stationText = stationFetch.loading
                       ? 'Loading…'
@@ -1187,13 +1180,16 @@ export default function MapPane({
                 </div>
               )}
 
-              <CountDayForm
-                enabled={Boolean(selectedCircleSummary.countDate) && countDatePassed && Boolean(countDateISO)}
-                circleName={selectedCircleSummary.circleName}
-                abbrev={selectedCircleSummary.abbrev}
-                dateISO={countDateISO}
-                prefill={stationPrefill?.patch || null}
-              />
+              {isCbcCircleSelection && (
+                <CountDayForm
+                  enabled={countDayFormEnabled}
+                  circleName={selectedCircleSummary?.circleName}
+                  abbrev={selectedCircleSummary?.abbrev}
+                  dateISO={countDateISO}
+                  prefill={stationPrefill?.patch || null}
+                  dataStatus={countDayDataStatus}
+                />
+              )}
 
               <hr style={{ border: 0, borderTop: '1px solid rgba(0,0,0,0.12)', marginTop: 14, marginBottom: 10 }} />
               <div className="small" style={{ opacity: 0.85, lineHeight: 1.35 }}>

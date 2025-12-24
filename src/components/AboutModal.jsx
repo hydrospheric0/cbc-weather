@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 
-const CBC_CIRCLES_URL =
-  'https://services1.arcgis.com/lDFzr3JyGEn5Eymu/arcgis/rest/services/CBC_126/FeatureServer/0';
+const CBC_CIRCLES_URL = 'https://gis.audubon.org/christmasbirdcount/';
 
 const APPLICATION_PORTAL_URL =
   'https://netapp.audubon.org/aap/application/cbc?_gl=1*14vfzzw*_gcl_au*NDI1NjA4MDIuMTc2NjI5MTI2MA..*_ga*MTAwNTY5OTc2Ny4xNzY2MjkxMjU5*_ga_X2XNL2MWTT*czE3NjY1OTQ0MjEkbzIkZzAkdDE3NjY1OTQ0MjEkajYwJGwwJGgw';
@@ -40,8 +39,16 @@ export default function AboutModal({ open, onClose }) {
         </div>
         <div className="modalBody">
           <p>
-            The nation’s longest-running community science bird project fuels Audubon’s work throughout the year.
-            The Christmas Bird Count occurs December 14 to January 5 every season in over 3000 count circles.
+            The Christmas Bird Count is the nation’s longest-running community science bird project. It occurs
+            December 14 to January 5 every season in over 3000 count circles. More information can be found on the{' '}
+            <a
+              href="https://www.audubon.org/community-science/christmas-bird-count"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Audubon website
+            </a>
+            .
           </p>
 
           <p style={{ marginTop: 10 }}>

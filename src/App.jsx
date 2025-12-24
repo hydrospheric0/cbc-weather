@@ -73,6 +73,9 @@ export default function App() {
 
   const [aboutOpen, setAboutOpen] = useState(false);
 
+  const forecastCacheRef = React.useRef(new Map());
+  const geocodeSeqRef = React.useRef(0);
+
   const [candidates, setCandidates] = useState([]);
   const [saved, setSaved] = useState(() => loadSaved());
 
@@ -217,10 +220,35 @@ export default function App() {
   }, [normalizeForSearch]);
 
   const fetchWithDays = useCallback(async (lat, lon, days) => {
+    const key = `${Number(lat).toFixed(5)},${Number(lon).toFixed(5)}:days=${Number(days) || 8}:units=${String(units || 'us')}`;
+    const now = Date.now();
+    const TTL_MS = 15 * 60 * 1000;
+
+    const existing = forecastCacheRef.current.get(key);
+    if (existing?.data && (now - Number(existing.ts || 0)) < TTL_MS) {
+      setForecast(existing.data);
+      return;
+    }
+
+    if (existing?.promise) {
+      try {
+        const cached = await existing.promise;
+        setForecast(cached);
+        return;
+      } catch {
+        // fall through to refetch
+      }
+    }
+
+    const p = fetchForecast({ lat, lon, days, units });
+    forecastCacheRef.current.set(key, { ts: now, promise: p, data: null });
+
     try {
-      const fc = await fetchForecast({ lat, lon, days, units });
+      const fc = await p;
+      forecastCacheRef.current.set(key, { ts: Date.now(), promise: null, data: fc });
       setForecast(fc);
     } catch (e) {
+      forecastCacheRef.current.delete(key);
       setError(e?.message || 'Failed to fetch forecast');
     }
   }, [units]);
@@ -439,13 +467,22 @@ export default function App() {
     const idx = await loadCbcIndex();
     const cbcMatches = searchCbcCircles(qTrim, idx);
 
+    // Debounce geocoding to reduce external requests when users submit repeatedly.
+    // Only the latest search will proceed.
+    geocodeSeqRef.current += 1;
+    const seq = geocodeSeqRef.current;
+    await new Promise((r) => window.setTimeout(r, 350));
+    if (seq !== geocodeSeqRef.current) return;
+
     try {
       const results = await geocode(qTrim, { count: 10 });
+      if (seq !== geocodeSeqRef.current) return;
       const geoResults = results.map((r) => ({ ...r, source: 'geocode' }));
       const combined = [...cbcMatches, ...geoResults];
       setCandidates(combined);
       if (combined.length === 0) setError('No locations found.');
     } catch (e) {
+      if (seq !== geocodeSeqRef.current) return;
       setError(e?.message || 'Geocoding failed');
       if (cbcMatches.length > 0) setCandidates(cbcMatches);
     }
@@ -539,7 +576,7 @@ export default function App() {
   }, [selectedLocation]);
 
   const extendPlotTo = null;
-  const showForecastOverlay = selectedLocation?.source === 'cbc-circle';
+  const showForecastOverlay = Boolean(selectedLocation);
 
   return (
     <div className="app appFull">
@@ -598,6 +635,22 @@ export default function App() {
         onSelect={selectAndFetch}
       />
       </div>
+      <footer className="footerbar">
+        <a
+          className="footerLink"
+          href="https://buymeacoffee.com/bartg"
+          target="_blank"
+          rel="noreferrer noopener"
+          aria-label="Buy me a coffee"
+        >
+          <img
+            className="bmcButton"
+            src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
+            alt="Buy Me a Coffee"
+            loading="lazy"
+          />
+        </a>
+      </footer>
     </div>
   );
 }
