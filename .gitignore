@@ -25,3 +25,6 @@ Thumbs.db
 # Misc
 coverage/
 *.tsbuildinfo
+
+# Local helper scripts (not tracked)
+scripts/local_update_and_push.sh

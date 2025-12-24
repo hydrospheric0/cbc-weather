@@ -356,9 +356,10 @@ export default function App() {
 
       const titleBlock = 64;
       const countBlock = countDatePassed ? 130 : 0;
+      const footerBlock = 32;
       const canvas = document.createElement('canvas');
       canvas.width = img.width;
-      canvas.height = titleBlock + img.height + countBlock;
+      canvas.height = titleBlock + img.height + countBlock + footerBlock;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
@@ -393,6 +394,11 @@ export default function App() {
           ctx.fillText(countDateWeatherSummary, 18, y);
         }
       }
+
+      // Footer attribution
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.font = '500 14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
+      ctx.fillText('Weather data by Open-Meteo.com', 18, canvas.height - 12);
 
       const a = document.createElement('a');
       const filenameBase = (title || `${forecastDays}-day-forecast`).replace(/[^a-z0-9\-_. ]/gi, '').trim().replace(/\s+/g, '_');

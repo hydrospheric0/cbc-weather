@@ -84,11 +84,12 @@ const CIRCLE_STYLE_BASE = { color: '#444', weight: 2, fill: true, fillOpacity: 0
 
 const OSM_LAYER_NAME = 'OpenStreetMap';
 const ESRI_LAYER_NAME = 'Esri Satellite';
+const ESRI_TOPO_LAYER_NAME = 'Esri Topo';
 
 const DEFAULT_CENTER = [37.5333, -98.6833];
 const DEFAULT_ZOOM = 3.5;
 
-const STATION_RADIUS_MILES = 15;
+const STATION_RADIUS_MILES = 20;
 
 function isFiniteNumber(n) {
   return typeof n === 'number' && Number.isFinite(n);
@@ -405,6 +406,7 @@ export default function MapPane({
     setMetarFetch({ loading: false, error: '' });
 
     if (!selectedCircleCenter) return;
+    if (!countDatePassed) return;
 
     const controller = new AbortController();
     const centerLat = selectedCircleCenter.lat;
@@ -449,7 +451,7 @@ export default function MapPane({
     });
 
     return () => controller.abort();
-  }, [selectedCircleCenter?.lat, selectedCircleCenter?.lon]);
+  }, [selectedCircleCenter?.lat, selectedCircleCenter?.lon, countDatePassed]);
 
   useEffect(() => {
     setStationPrefill(null);
@@ -1013,7 +1015,7 @@ export default function MapPane({
               <div style={{ paddingLeft: 22, paddingRight: 22 }}>
                 {(selectedCircleSummary.leaderName || selectedCircleSummary.contactEmail || selectedCircleSummary.contactPhone) && (
                   <div style={{ opacity: 0.9, marginTop: 12, fontSize: 16, fontWeight: 700 }}>
-                    {selectedCircleSummary.leaderName ? selectedCircleSummary.leaderName : ''}
+                    {selectedCircleSummary.leaderName ? `Contact: ${selectedCircleSummary.leaderName}` : ''}
                     {selectedCircleSummary.leaderName && (selectedCircleSummary.contactEmail || selectedCircleSummary.contactPhone) ? ' • ' : ''}
                     {selectedCircleSummary.contactEmail ? selectedCircleSummary.contactEmail : ''}
                     {(selectedCircleSummary.contactEmail && selectedCircleSummary.contactPhone) ? ' • ' : ''}
@@ -1057,7 +1059,7 @@ export default function MapPane({
                     }
 
                     const centerRadius = parts.join(' • ');
-                    const showStation = Boolean(stationFetch.loading || stationFetch.error || nearestStation);
+                    const showStation = countDatePassed && Boolean(stationFetch.loading || stationFetch.error || nearestStation);
 
                     const stationText = stationFetch.loading
                       ? 'Loading…'
@@ -1242,6 +1244,14 @@ export default function MapPane({
               <TileLayer
                 attribution="Tiles &copy; Esri"
                 url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                maxZoom={19}
+              />
+            </LayersControl.BaseLayer>
+
+            <LayersControl.BaseLayer name={ESRI_TOPO_LAYER_NAME}>
+              <TileLayer
+                attribution="Tiles &copy; Esri"
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
                 maxZoom={19}
               />
             </LayersControl.BaseLayer>
