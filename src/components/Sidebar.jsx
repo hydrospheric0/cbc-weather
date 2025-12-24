@@ -67,7 +67,7 @@ export default function Sidebar({
               <li
                 key={`${c.source || 'geocode'}:${c.id || ''}:${c.latitude},${c.longitude},${c.name}`}
                 className="listItem"
-                style={{ backgroundColor: c.source === 'cbc' ? 'rgba(255, 255, 0, 0.25)' : 'transparent' }}
+                style={{ backgroundColor: c.source === 'cbc' ? 'rgba(0, 150, 136, 0.18)' : 'transparent' }}
                 onClick={() => onSelectCandidate(c)}
                 title="Click to select & fetch forecast"
               >
