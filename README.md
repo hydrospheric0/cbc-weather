@@ -25,8 +25,6 @@ If the count date was published on the [CBC circles by National Audubon Society]
 
 Once the count has passed, the weather information for that circle’s count date will be automatically populated. This is the information a compiler needs to provide when filling out the count results on the [Application Portal](https://netapp.audubon.org/aap/application/cbc?_gl=1*14vfzzw*_gcl_au*NDI1NjA4MDIuMTc2NjI5MTI2MA..*_ga*MTAwNTY5OTc2Ny4xNzY2MjkxMjU5*_ga_X2XNL2MWTT*czE3NjY1OTQ0MjEkbzIkZzAkdDE3NjY1OTQ0MjEkajYwJGwwJGgw).
 
-If you find this tool useful, please consider supporting its development: [Sponsor hydrospheric0](https://github.com/sponsors/hydrospheric0)
-
 ## Run
 From this folder:
 
