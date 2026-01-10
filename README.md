@@ -1,7 +1,7 @@
 # CBC weather
 
 ## About the Christmas Bird Count
-The Christmas Bird Count is the nation’s longest-running community science bird project. It occurs December 14 to January 5 every season in over 3000 count circles. More information can be found on the [Audubon website](https://www.audubon.org/community-science/christmas-bird-count).
+The Christmas Bird Count is the nation’s longest-running community science bird project. They take place annualy between December 14 to January 5 in over 3000 count circles. More information can be found on the [Audubon website](https://www.audubon.org/community-science/christmas-bird-count).
 
 ## About the tool
 This tool was developed to **help count circle compilers** plan their count by:
@@ -11,7 +11,7 @@ This tool was developed to **help count circle compilers** plan their count by:
 The prototype of the app is hosted at: https://hydrospheric0.github.io/cbc-weather/
 
 ## Features
-- OpenSetreetMap basemap
+- OpenStreetMap basemap
 - Selectable alternate base layer - ESRI satellite or ESRI Topo
 - All CBC circle locations
 - Automated location detection to detect nearest CBC circle
