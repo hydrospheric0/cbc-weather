@@ -5,6 +5,10 @@ const CBC_CIRCLES_URL = 'https://gis.audubon.org/christmasbirdcount/';
 const APPLICATION_PORTAL_URL =
   'https://netapp.audubon.org/aap/application/cbc';
 
+const SOURCE_CODE_URL = 'https://github.com/hydrospheric0/cbc-weather';
+
+const SUPPORT_URL = 'https://buymeacoffee.com/bartg';
+
 export default function AboutModal({ open, onClose }) {
   useEffect(() => {
     if (!open) return;
@@ -49,8 +53,12 @@ export default function AboutModal({ open, onClose }) {
             .
           </p>
 
-          <p style={{ marginTop: 10 }}>
-            This tool was developed to <strong>help count circle compilers</strong> plan their count by:
+          <div style={{ marginTop: 12, fontWeight: 700 }}>
+            <strong>Purpose</strong>
+          </div>
+
+          <p style={{ marginTop: 6 }}>
+            This tool was developed to help count circle compilers plan their count by:
           </p>
           <ul>
             <li>Creating accurate and easy-to-share insights into the likely weather conditions during their count.</li>
@@ -59,7 +67,9 @@ export default function AboutModal({ open, onClose }) {
             </li>
           </ul>
 
-          <div style={{ marginTop: 12, fontWeight: 700 }}>How to use</div>
+          <div style={{ marginTop: 12, fontWeight: 700 }}>
+            <strong>How to use</strong>
+          </div>
           <p style={{ marginTop: 6 }}>
             By default the tool will request the user’s location. If permitted, the tool zooms in on the nearest
             count circle and populates the weather forecast. If the count date was published on the{' '}
@@ -79,8 +89,31 @@ export default function AboutModal({ open, onClose }) {
             .
           </p>
 
-          <p style={{ marginTop: 12 }}>
+          <div style={{ marginTop: 12, fontWeight: 700 }}>
+            <strong>Share</strong>
+          </div>
+          <p style={{ marginTop: 6 }}>
             If you find this tool useful, please consider sharing it with other CBC circle compilers.
+          </p>
+
+          <div style={{ marginTop: 12, fontWeight: 700 }}>
+            <strong>Source code</strong>
+          </div>
+          <p style={{ marginTop: 6 }}>
+            <a href={SOURCE_CODE_URL} target="_blank" rel="noreferrer">GitHub</a>
+          </p>
+
+          <div style={{ marginTop: 12, fontWeight: 700 }}>
+            <strong>Support</strong>
+          </div>
+          <p style={{ marginTop: 6 }}>
+            <a href={SUPPORT_URL} target="_blank" rel="noreferrer">
+              <img
+                src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
+                alt="Buy Me a Coffee"
+                width="140"
+              />
+            </a>
           </p>
         </div>
       </div>
