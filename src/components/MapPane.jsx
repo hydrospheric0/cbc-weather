@@ -1174,7 +1174,12 @@ export default function MapPane({
               <hr style={{ border: 0, borderTop: '1px solid rgba(0,0,0,0.12)', marginTop: 14, marginBottom: 10 }} />
               <div className="small" style={{ opacity: 0.85, lineHeight: 1.35 }}>
                 <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
-                  Weather data by Open-Meteo.com
+                  Forecast data by Open-Meteo.com
+                </a>
+                {' • '}
+                <span>Station data by: </span>
+                <a href="https://aviationweather.gov/" target="_blank" rel="noreferrer">
+                  Aviationweather.gov
                 </a>
                 {' • '}
                 <a href="https://gis.audubon.org/christmasbirdcount/" target="_blank" rel="noreferrer">
