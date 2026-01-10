@@ -28,3 +28,4 @@ coverage/
 
 # Local helper scripts (not tracked)
 scripts/local_update_and_push.sh
+pushit.sh
