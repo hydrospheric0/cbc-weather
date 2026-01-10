@@ -1174,20 +1174,19 @@ export default function MapPane({
               <hr style={{ border: 0, borderTop: '1px solid rgba(0,0,0,0.12)', marginTop: 14, marginBottom: 10 }} />
               <div className="small" style={{ opacity: 0.85, lineHeight: 1.35 }}>
                 <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
-                  Forecast data by Open-Meteo.com
+                  Forecast data Open-Meteo.com
                 </a>
                 {' • '}
-                <span>Station data by: </span>
                 <a href="https://aviationweather.gov/" target="_blank" rel="noreferrer">
-                  Aviationweather.gov
+                  Station data: Aviationweather.gov
                 </a>
                 {' • '}
                 <a href="https://gis.audubon.org/christmasbirdcount/" target="_blank" rel="noreferrer">
-                  CBC circles by National Audubon Society
+                  CBC circles
                 </a>
                 {' • '}
                 <a
-                  href="https://netapp.audubon.org/aap/application/cbc?_gl=1*14vfzzw*_gcl_au*NDI1NjA4MDIuMTc2NjI5MTI2MA..*_ga*MTAwNTY5OTc2Ny4xNzY2MjkxMjU5*_ga_X2XNL2MWTT*czE3NjY1OTQ0MjEkbzIkZzAkdDE3NjY1OTQ0MjEkajYwJGwwJGgw"
+                  href="https://netapp.audubon.org/aap/application/cbc"
                   target="_blank"
                   rel="noreferrer"
                 >

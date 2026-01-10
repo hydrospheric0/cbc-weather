@@ -570,40 +570,11 @@ export default function App() {
   const extendPlotTo = null;
   const showForecastOverlay = Boolean(selectedLocation);
 
-  const REPO_URL = 'https://github.com/hydrospheric0/cbc-weather';
-  const PROJECT_PAGE_URL = 'https://hydrospheric0.github.io/cbc-weather/';
-
   return (
     <div className="app appFull">
       <div className="topbar">
         <div className="topbarTitle">
           <div className="appTitle">Christmas Bird Count Weather Mapper</div>
-          <div className="topbarMeta">
-            <div className="badgeRow" aria-label="Code summary">
-              <a href={REPO_URL} target="_blank" rel="noreferrer noopener" aria-label="GitHub repository">
-                <img
-                  className="ghBadge"
-                  alt="Top language"
-                  src="https://img.shields.io/github/languages/top/hydrospheric0/cbc-weather"
-                  loading="lazy"
-                />
-              </a>
-              <a href={REPO_URL} target="_blank" rel="noreferrer noopener" aria-label="GitHub repository languages">
-                <img
-                  className="ghBadge"
-                  alt="Language count"
-                  src="https://img.shields.io/github/languages/count/hydrospheric0/cbc-weather"
-                  loading="lazy"
-                />
-              </a>
-            </div>
-            <div className="projectRow">
-              <span>Project page:</span>{' '}
-              <a className="topbarLink" href={PROJECT_PAGE_URL} target="_blank" rel="noreferrer noopener">
-                {PROJECT_PAGE_URL}
-              </a>
-            </div>
-          </div>
         </div>
         <button
           type="button"
@@ -659,33 +630,19 @@ export default function App() {
       />
       </div>
       <footer className="footerbar">
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <a className="footerLink" href="https://open-meteo.com/" target="_blank" rel="noreferrer noopener">
-            Forecast data Open-Meteo.com
-          </a>
-          <span aria-hidden="true">•</span>
-          <a className="footerLink" href="https://aviationweather.gov/" target="_blank" rel="noreferrer noopener">
-            Station data: Aviationweather.gov
-          </a>
-          <span aria-hidden="true">•</span>
-          <a
-            className="footerLink"
-            href="https://gis.audubon.org/christmasbirdcount/"
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            CBC circles
-          </a>
-          <span aria-hidden="true">•</span>
-          <a
-            className="footerLink"
-            href="https://netapp.audubon.org/aap/application/cbc"
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            Audubon Application Portal
-          </a>
-        </div>
+        <a
+          className="sponsorButton"
+          href="https://buymeacoffee.com/bartg"
+          target="_blank"
+          rel="noreferrer noopener"
+          aria-label="Support this project"
+        >
+          <img
+            className="bmcButton"
+            src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
+            alt="Buy Me a Coffee"
+          />
+        </a>
       </footer>
     </div>
   );
