@@ -1,10 +1,13 @@
 # CBC weather
 
+[![Top language](https://img.shields.io/github/languages/top/hydrospheric0/cbc-weather)](https://github.com/hydrospheric0/cbc-weather)
+[![Language count](https://img.shields.io/github/languages/count/hydrospheric0/cbc-weather)](https://github.com/hydrospheric0/cbc-weather)
+
 ## About the Christmas Bird Count
 The Christmas Bird Count is the nation’s longest-running community science bird project. They take place annualy between December 14 to January 5 in over 3000 count circles. More information can be found on the [Audubon website](https://www.audubon.org/community-science/christmas-bird-count).
 
 ## About the tool
-This tool was developed to **help count circle compilers** plan their count by:
+This tool aims to **help count circle compilers** plan their count by:
 - Creating accurate and easy-to-share insights into the likely weather conditions during their count
 - Allow easy extraction of the observed conditions after the count for reporting purposes
 
