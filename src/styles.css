@@ -1,7 +1,25 @@
 html, body {
   height: 100%;
   margin: 0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Poppins', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}
+
+:root {
+  /* Metolius Research theme */
+  --header-bg: #0c1b50;
+  /* Keep legacy var name to minimize churn */
+  --accent-teal: #dc337d;
+  --accent-green: #748938;
+  --accent-slate: #4b6576;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Nunito Sans', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
 }
 
 #root {
@@ -10,9 +28,9 @@ html, body {
 
 .app {
   min-height: 100%;
-  background: #f3f4f6;
-  color: #111827;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  background: #ffffff;
+  color: #454545;
+  font-family: 'Poppins', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
 }
 
 .appFull {
@@ -35,9 +53,9 @@ html, body {
   font-weight: 800;
   font-size: 32px;
   line-height: 1.15;
-  background: #111827;
+  background: var(--header-bg);
   color: #f9fafb;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Nunito Sans', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
 }
 
 .topbarTitle {
@@ -53,9 +71,9 @@ html, body {
   align-items: center;
   justify-content: flex-end;
   border-top: 1px solid rgba(0,0,0,0.08);
-  background: #111827;
+  background: var(--header-bg);
   color: #f9fafb;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Poppins', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
 }
 
 .footerLink {
@@ -79,7 +97,7 @@ html, body {
   height: 34px;
   border-radius: 999px;
   border: 3px solid rgba(255,255,255,0.95);
-  background: #009688;
+  background: var(--accent-teal);
   color: #f9fafb;
   cursor: pointer;
   font-weight: 900;
@@ -90,13 +108,13 @@ html, body {
 }
 
 .infoButton:hover {
-  background: rgba(0, 150, 136, 0.9);
+  background: rgba(220, 51, 125, 0.9);
 }
 
 .modalOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 150, 136, 0.7);
+  background: rgba(12, 27, 80, 0.7);
   z-index: 5000;
   display: flex;
   align-items: flex-start;
@@ -129,7 +147,7 @@ html, body {
   justify-content: space-between;
   padding: 12px 14px;
   border-bottom: 1px solid rgba(0,0,0,0.08);
-  background: #009688;
+  background: var(--accent-green);
   color: #fff;
 }
 
