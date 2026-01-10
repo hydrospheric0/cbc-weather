@@ -32,3 +32,6 @@ From this folder:
 - `npm run dev`
 
 Then open the URL Vite prints (typically `http://localhost:5173`).
+
+## Support
+If you find this tool useful, please consider supporting its development: https://github.com/sponsors/hydrospheric0
