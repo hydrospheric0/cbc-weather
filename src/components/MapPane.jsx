@@ -1180,6 +1180,14 @@ export default function MapPane({
                 <a href="https://gis.audubon.org/christmasbirdcount/" target="_blank" rel="noreferrer">
                   CBC circles by National Audubon Society
                 </a>
+                {' • '}
+                <a
+                  href="https://netapp.audubon.org/aap/application/cbc?_gl=1*14vfzzw*_gcl_au*NDI1NjA4MDIuMTc2NjI5MTI2MA..*_ga*MTAwNTY5OTc2Ny4xNzY2MjkxMjU5*_ga_X2XNL2MWTT*czE3NjY1OTQ0MjEkbzIkZzAkdDE3NjY1OTQ0MjEkajYwJGwwJGgw"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Audubon Application Portal
+                </a>
               </div>
             </div>
 
