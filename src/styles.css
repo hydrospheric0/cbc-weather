@@ -71,8 +71,8 @@ h6 {
   align-items: center;
   justify-content: flex-end;
   border-top: 1px solid rgba(0,0,0,0.08);
-  background: var(--header-bg);
-  color: #f9fafb;
+  background: #ffffff;
+  color: var(--header-bg);
   font-family: 'Poppins', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -83,7 +83,7 @@ h6 {
 }
 
 .footerLink:hover {
-  opacity: 0.9;
+  color: var(--accent-teal);
 }
 
 .bmcButton {
@@ -97,7 +97,7 @@ h6 {
   height: 34px;
   border-radius: 999px;
   border: 3px solid rgba(255,255,255,0.95);
-  background: var(--accent-teal);
+  background: var(--accent-green);
   color: #f9fafb;
   cursor: pointer;
   font-weight: 900;
@@ -108,7 +108,7 @@ h6 {
 }
 
 .infoButton:hover {
-  background: rgba(220, 51, 125, 0.9);
+  background: var(--accent-slate);
 }
 
 .modalOverlay {

@@ -628,20 +628,33 @@ export default function App() {
       />
       </div>
       <footer className="footerbar">
-        <a
-          className="footerLink"
-          href="https://buymeacoffee.com/bartg"
-          target="_blank"
-          rel="noreferrer noopener"
-          aria-label="Buy me a coffee"
-        >
-          <img
-            className="bmcButton"
-            src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
-            alt="Buy Me a Coffee"
-            loading="lazy"
-          />
-        </a>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <a className="footerLink" href="https://open-meteo.com/" target="_blank" rel="noreferrer noopener">
+            Forecast data Open-Meteo.com
+          </a>
+          <span aria-hidden="true">•</span>
+          <a className="footerLink" href="https://aviationweather.gov/" target="_blank" rel="noreferrer noopener">
+            Station data: Aviationweather.gov
+          </a>
+          <span aria-hidden="true">•</span>
+          <a
+            className="footerLink"
+            href="https://gis.audubon.org/christmasbirdcount/"
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            CBC circles
+          </a>
+          <span aria-hidden="true">•</span>
+          <a
+            className="footerLink"
+            href="https://netapp.audubon.org/aap/application/cbc"
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            Audubon Application Portal
+          </a>
+        </div>
       </footer>
     </div>
   );
