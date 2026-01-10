@@ -8,7 +8,7 @@ html, body {
   /* Metolius Research theme */
   --header-bg: #0c1b50;
   /* Keep legacy var name to minimize churn */
-  --accent-teal: #dc337d;
+  --accent-teal: #009688;
   --accent-green: #748938;
   --accent-slate: #4b6576;
 }
@@ -138,7 +138,7 @@ h6 {
   height: 34px;
   border-radius: 999px;
   border: 3px solid rgba(255,255,255,0.95);
-  background: #009688;
+  background: var(--accent-teal);
   color: #f9fafb;
   cursor: pointer;
   font-weight: 900;
