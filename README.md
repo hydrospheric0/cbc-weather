@@ -25,8 +25,10 @@ By default the tool will request the user’s location. If permitted, the tool z
 Once the count has passed, the weather information for that circle’s count date will be automatically populated. This is the information a compiler needs to provide when filling out the count results on the [Audubon Application Portal](https://netapp.audubon.org/aap/application/cbc).
 
 ## About the weather data
-This project uses the [Open-Meteo API](https://open-meteo.com/).
+This project uses the [Open-Meteo API](https://open-meteo.com/) for generating teh weather forecast.
 This API provides free and open access to forecast and 80 years of historical data for non-commercial use.
+For weather conditions during the count we use data from [aviationweather.gov](https://aviationweather.gov).
+
 
 ## About observed conditions (METAR)
 For the “Weather report” (observed conditions after the count), this project uses the public [AviationWeather.gov](https://aviationweather.gov/) API:
