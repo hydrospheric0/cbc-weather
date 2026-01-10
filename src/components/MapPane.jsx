@@ -1045,7 +1045,32 @@ export default function MapPane({
                       padding: '8px 10px'
                     }}
                   >
-                    <div style={{ fontWeight: 900, fontSize: 18, lineHeight: 1.2, color: '#111827' }}>{Number(forecastPanel.forecastDays) || 8} day forecast</div>
+                    <div style={{ fontWeight: 900, fontSize: 18, lineHeight: 1.2, color: '#111827' }}>
+                      {(() => {
+                        const formatIsoToUs = (iso) => {
+                          const s = String(iso || '').trim();
+                          if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '';
+                          const d = new Date(`${s}T00:00:00Z`);
+                          if (Number.isNaN(d.getTime())) return '';
+                          return d.toLocaleDateString('en-US', { timeZone: 'UTC' });
+                        };
+
+                        const days = Number(forecastPanel.forecastDays) || 8;
+                        const base = `${days} day forecast`;
+                        if (days !== 8) return base;
+
+                        const fc = forecastPanel.plotForecast || forecastPanel.forecast;
+                        const times = fc?.daily?.time;
+                        if (!Array.isArray(times) || times.length === 0) return base;
+
+                        const startIso = times[0];
+                        const endIso = times[Math.min(7, times.length - 1)];
+                        const startLabel = formatIsoToUs(startIso);
+                        const endLabel = formatIsoToUs(endIso);
+                        if (!startLabel || !endLabel) return base;
+                        return `${base} - ${startLabel} - ${endLabel}`;
+                      })()}
+                    </div>
                     <button
                       className="button"
                       style={{ padding: '6px 10px', fontSize: 12, whiteSpace: 'nowrap' }}

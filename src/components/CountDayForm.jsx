@@ -1,5 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
+function formatIsoToUs(iso) {
+  const s = String(iso || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '';
+  const d = new Date(`${s}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-US', { timeZone: 'UTC' });
+}
+
 function safeKeyPart(s) {
   return String(s || '').trim().replace(/\s+/g, ' ').slice(0, 200);
 }
@@ -279,7 +287,12 @@ export default function CountDayForm({ circleName, abbrev, dateISO, enabled, pre
           padding: '8px 10px'
         }}
       >
-        <div style={{ fontWeight: 900, fontSize: 16, lineHeight: 1.2, color: '#111827' }}>Weather report</div>
+        <div style={{ fontWeight: 900, fontSize: 16, lineHeight: 1.2, color: '#111827' }}>
+          {(() => {
+            const label = formatIsoToUs(dateISO);
+            return label ? `Weather report - ${label}` : 'Weather report';
+          })()}
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {dataStatus === 'loading' ? (
             <div className="loadingSpinner" title="Loading…" aria-label="Loading" />
