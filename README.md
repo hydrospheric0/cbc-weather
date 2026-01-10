@@ -27,22 +27,11 @@ Once the count has passed, the weather information for that circle’s count dat
 ## About the weather data
 This project uses the [Open-Meteo API](https://open-meteo.com/) for generating teh weather forecast.
 This API provides free and open access to forecast and 80 years of historical data for non-commercial use.
-For weather conditions during the count we use data from [aviationweather.gov](https://aviationweather.gov).
-
 
 ## About observed conditions (METAR)
 For the “Weather report” (observed conditions after the count), this project uses the public [AviationWeather.gov](https://aviationweather.gov/) API:
 - Station lookup: `/api/data/stationinfo` (to find the nearest METAR-capable station)
 - METAR observations: `/api/data/metar` (to derive AM/PM cloud and precipitation categories, wind, temperature, etc.)
-
-### Why there is a Cloudflare Worker
-AviationWeather.gov does not send permissive browser CORS headers for GitHub Pages, so direct browser requests from `*.github.io` will be blocked.
-
-To keep the site working on GitHub Pages, this repo includes a small Cloudflare Worker CORS proxy in `cloudflare-worker/`, and the frontend uses it automatically when hosted on `*.github.io`.
-
-### Do we need the removed “API/OpenAPI” file?
-No. This project calls the AviationWeather.gov endpoints directly with `fetch()` and does not require an OpenAPI schema file.
-No API keys are required for either Open-Meteo or AviationWeather.gov.
 
 ### Support this project
 
