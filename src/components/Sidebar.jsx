@@ -27,9 +27,6 @@ export default function Sidebar({
   const buffDist = pick(p, ['BUFF_DIST', 'BuffDist', 'BUFFDIST']);
   const lat = pick(p, ['Latitude', 'LATITUDE', 'Lat']);
   const lon = pick(p, ['Longitude', 'LONGITUDE', 'Lon', 'Lng']);
-  const compiler = pick(p, ['compiler', 'Compiler']);
-  const contactEmail = pick(p, ['contact_email', 'EmailAddress', 'email', 'Email']);
-  const contactPhone = pick(p, ['contact_phone', 'phone', 'Phone']);
 
   return (
     <div className="card sidebar">
@@ -97,15 +94,6 @@ export default function Sidebar({
                 {abbrev && countDate ? ' • ' : ''}
                 {countDate ? `Count: ${countDate}` : ''}
               </div>
-              {(compiler || contactEmail || contactPhone) && (
-                <div className="small" style={{ opacity: 0.85, marginTop: 4 }}>
-                  {compiler ? `Compiler: ${compiler}` : ''}
-                  {compiler && (contactEmail || contactPhone) ? ' • ' : ''}
-                  {contactEmail ? contactEmail : ''}
-                  {(contactEmail && contactPhone) ? ' • ' : ''}
-                  {contactPhone ? contactPhone : ''}
-                </div>
-              )}
               {(lat !== null || lon !== null || buffDist !== null) && (
                 <div className="small" style={{ opacity: 0.85, marginTop: 4 }}>
                   {(lat !== null && lon !== null) ? `Center: ${Number(lat).toFixed(4)}, ${Number(lon).toFixed(4)}` : ''}

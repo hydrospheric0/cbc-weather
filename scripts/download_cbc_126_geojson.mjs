@@ -1,24 +1,17 @@
-// Downloads Audubon CBC 126 circles from ArcGIS FeatureServer and writes a GeoJSON
-// based on center coordinates only (Point geometries).
-// The app renders the standard 7.5-mile radius buffer using Leaflet circles.
-//
-// Usage:
-//   node scripts/download_cbc_126_geojson.mjs
-//
-// Output:
-//   data/cbc_circles_merged.geojson
-
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const LAYER_URL = 'https://services1.arcgis.com/lDFzr3JyGEn5Eymu/arcgis/rest/services/CBC_126/FeatureServer/0';
 const OUT_FILE = path.resolve('data/cbc_circles_merged.geojson');
 
-// Local manual overrides live here so refreshes don't wipe them.
-// Format: { "ABBREV": { "Latitude": 12.34, "Longitude": -56.78, "Cnt_dt": "YYYY-MM-DD", ... } }
 const OVERRIDES_FILE = path.resolve('data/cbc_overrides.json');
 
 const DROP_FIELDS = new Set([
+  'FirstName',
+  'LastName',
+  'EmailAddress',
+  'Phone',
+  'PhoneNumber',
   'IsPrimary',
   'ParticipantEnrollmentStatus',
   'Circle_id',
@@ -92,8 +85,6 @@ async function main() {
 
       const iso = attrs?.Cnt_dt ? String(attrs.Cnt_dt).trim() : null;
 
-      // Match existing merged format:
-      // - properties include date + date_label
       const props = {
         ...attrs,
         date: iso && /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso : null,

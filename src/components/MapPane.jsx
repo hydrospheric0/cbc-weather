@@ -6,7 +6,6 @@ import ForecastPlot from './ForecastPlot.jsx';
 import { dir16 } from '../lib/geo.js';
 import { approxUtcOffsetHoursFromLon, deriveCountDayPrefillFromMetars, fetchMetarsJSON, fetchStationInfoGeoJSON } from '../lib/aviationWeather.js';
 
-// Fix default marker icons in bundlers
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -32,7 +31,6 @@ function FlyTo({ lat, lon, zoom, bounds, source, circle, selectionId, fitPadding
       const rpX = Number.isFinite(restPointX) ? restPointX : 0.5;
       const rpY = Number.isFinite(restPointY) ? restPointY : 0.5;
 
-      // Delta from true center (0.5, 0.5) to desired screen rest point.
       const dx = (rpX - 0.5) * size.x;
       const dy = (rpY - 0.5) * size.y;
 
@@ -53,16 +51,12 @@ function FlyTo({ lat, lon, zoom, bounds, source, circle, selectionId, fitPadding
     if (key === lastKeyRef.current) return;
     lastKeyRef.current = key;
 
-    // Requested behavior: do not fit-to-bounds or variable zoom.
-    // On selection, zoom in up to a fixed 12 (never zoom out); otherwise pan only.
     const FIXED_ZOOM = 12;
     const current = map.getZoom?.();
     const shouldZoomIn = Number.isFinite(current) ? current < FIXED_ZOOM : true;
 
     const isCbcSelection = String(source || '').startsWith('cbc');
-    // Desired on-screen rest point: for CBC selections, land ~70% from left.
     const restPointX = isCbcSelection ? 0.70 : 0.50;
-    // Move the target ~10% higher on screen.
     const restPointY = 0.40;
 
     if (shouldZoomIn) {
@@ -78,8 +72,6 @@ function FlyTo({ lat, lon, zoom, bounds, source, circle, selectionId, fitPadding
   return null;
 }
 
-// NOTE: fillOpacity 0 keeps appearance the same, but makes the entire polygon area interactive
-// (so hover tooltips work when the cursor is inside the circle, not only on the thin outline).
 const CIRCLE_STYLE_BASE = { color: '#444', weight: 2, fill: true, fillOpacity: 0 };
 
 const OSM_LAYER_NAME = 'OpenStreetMap';
@@ -143,17 +135,12 @@ async function loadGeoJson(url) {
 function MapClickHandler({ onMapClick }) {
   const map = useMapEvents({
     click: (e) => {
-      // Ignore clicks that originate from interactive overlays/markers/popups.
-      // Without this, clicking a CBC center point can also trigger the map click handler,
-      // overriding the circle selection (and its bounds) and making the view zoom to a point.
       const t = e?.originalEvent?.target;
       try {
         if (t?.closest?.('.leaflet-interactive') || t?.closest?.('.leaflet-marker-icon') || t?.closest?.('.leaflet-popup')) {
           return;
         }
-      } catch {
-        // ignore
-      }
+      } catch {}
 
       onMapClick(e.latlng, map.getZoom());
     },
@@ -174,9 +161,7 @@ function formatCbcTooltip(props) {
 function normalizeDateToIso(raw) {
   const s = String(raw || '').trim();
   if (!s) return '';
-  // Already ISO
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  // Common CBC formats like M/D/YY or MM/DD/YY
   const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
   if (m) {
     const mm = Number(m[1]);
@@ -238,8 +223,6 @@ function OverlayActiveSync({ layerRef, onActiveChange }) {
 
     const resolveLayer = () => {
       const ref = layerRef?.current;
-      // react-leaflet ref is typically the Leaflet layer instance.
-      // Some versions expose { leafletElement }.
       return ref?.leafletElement || ref || null;
     };
 
@@ -269,8 +252,6 @@ function OverlayActiveSync({ layerRef, onActiveChange }) {
 
   return null;
 }
-
-// Auto-open popup removed: popups should open only on click.
 
 function pick(props, keys) {
   for (const k of keys) {
@@ -310,10 +291,9 @@ export default function MapPane({
   const [cbcGeoJson, setCbcGeoJson] = useState(null);
 
   const [cbcSelectedCircle, setCbcSelectedCircle] = useState(null);
-  // { name, properties, centerLat, centerLon, bounds }
-  const [cbcPoint, setCbcPoint] = useState(null); // { lat, lon }
+  const [cbcPoint, setCbcPoint] = useState(null);
 
-  const [userLocation, setUserLocation] = useState(null); // { lat, lon }
+  const [userLocation, setUserLocation] = useState(null);
   const [didAutoLocate, setDidAutoLocate] = useState(false);
 
   const [mapZoom, setMapZoom] = useState(null);
@@ -511,7 +491,7 @@ export default function MapPane({
     return () => controller.abort();
   }, [nearestStation?.icaoId, nearestStation?.lon, countDatePassed, countDateISO]);
 
-  const [rainViewerFrames, setRainViewerFrames] = useState([]); // [{ time, path }]
+  const [rainViewerFrames, setRainViewerFrames] = useState([]);
   const [rainViewerHost, setRainViewerHost] = useState('https://tilecache.rainviewer.com');
   const [rainViewerTimestamp, setRainViewerTimestamp] = useState(null);
   const [isRainViewerActive, setIsRainViewerActive] = useState(false);
@@ -519,16 +499,8 @@ export default function MapPane({
   const rainViewerRadarUrl = useMemo(() => {
     if (!Number.isFinite(rainViewerTimestamp)) return null;
     const host = String(rainViewerHost || 'https://tilecache.rainviewer.com').replace(/\/$/, '');
-    // Based on RainViewer public endpoints + Leaflet.Rainviewer plugin conventions.
-    // Example: https://tilecache.rainviewer.com/v2/radar/<ts>/256/{z}/{x}/{y}/2/1_1.png
     return `${host}/v2/radar/${rainViewerTimestamp}/256/{z}/{x}/{y}/2/1_1.png`;
   }, [rainViewerTimestamp]);
-
-  useEffect(() => {
-    // Intentionally no initial RainViewer API fetch here.
-    // This avoids metered usage unless the radar overlay is enabled.
-    return undefined;
-  }, []);
 
   useEffect(() => {
     if (!isRainViewerActive) return undefined;
@@ -537,7 +509,6 @@ export default function MapPane({
     let intervalId = null;
 
     const refresh = async () => {
-      // Reuse the same endpoint; keep the overlay current while enabled.
       try {
         const res = await fetch('https://api.rainviewer.com/public/weather-maps.json', { cache: 'no-store' });
         if (!res.ok) return;
@@ -559,9 +530,7 @@ export default function MapPane({
           const last = frames[frames.length - 1].time;
           if (Number.isFinite(last)) setRainViewerTimestamp(last);
         }
-      } catch {
-        // ignore
-      }
+      } catch {}
     };
 
     refresh();
@@ -577,8 +546,6 @@ export default function MapPane({
     if (!isRainViewerActive) return undefined;
     if (!Array.isArray(rainViewerFrames) || rainViewerFrames.length < 2) return undefined;
 
-    // Try to animate roughly the last 6 hours. RainViewer typically provides fewer hours
-    // (often ~2h past + short nowcast), so this will animate whatever is available.
     const nowSec = Date.now() / 1000;
     const cutoff = nowSec - (6 * 60 * 60);
     const frames = rainViewerFrames.filter((f) => f.time >= cutoff);
@@ -625,7 +592,6 @@ export default function MapPane({
 
       let bounds = boundsOverride || null;
       if (!bounds) {
-        // If we only have a point feature, compute a circle bounds from BUFF_DIST.
         const miles = isFiniteNumber(props?.BUFF_DIST) ? props.BUFF_DIST : 7.5;
         const radiusMeters = milesToMeters(miles);
         if (isFiniteNumber(centerLat) && isFiniteNumber(centerLon) && Number.isFinite(radiusMeters) && radiusMeters > 0) {
@@ -758,8 +724,6 @@ export default function MapPane({
     const lon = Number(selected?.lon);
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return '';
 
-    // Match by exact center coordinates (CBC circle selection uses the circle center).
-    // Tolerant compare to avoid float noise.
     const eps = 1e-6;
     const hit = cbcCenters.items.find((c) => Math.abs(Number(c.lat) - lat) < eps && Math.abs(Number(c.lon) - lon) < eps);
     return hit?.id ? String(hit.id) : '';
@@ -787,9 +751,7 @@ export default function MapPane({
         const b = L.circle([c.lat, c.lon], { radius: c.radiusMeters }).getBounds();
         if (!bounds) bounds = b;
         else bounds.extend(b);
-      } catch {
-        // ignore
-      }
+      } catch {}
     }
     return bounds && bounds.isValid && bounds.isValid() ? bounds : null;
   }, [cbcCenters]);
@@ -800,8 +762,6 @@ export default function MapPane({
     let cancelled = false;
     if (cbcGeoJson) return undefined;
 
-    // Load all nationwide CBC circles (with their buffer MultiPolygons already computed)
-    // and local-corrected count dates merged in.
     const cbcUrl = new URL('../../data/cbc_circles_merged.geojson', import.meta.url);
     if (import.meta.env.DEV) {
       cbcUrl.searchParams.set('v', String(Date.now()));
@@ -811,10 +771,7 @@ export default function MapPane({
       .then((data) => {
         if (!cancelled) setCbcGeoJson(data);
       })
-      .catch((e) => {
-        // eslint-disable-next-line no-console
-        console.error('Failed to load cbc_circles_merged.geojson', e);
-      });
+      .catch(() => {});
 
     return () => {
       cancelled = true;
@@ -835,9 +792,7 @@ export default function MapPane({
           setUserLocation({ lat, lon });
         }
       },
-      () => {
-        // ignore (permission denied/unavailable)
-      },
+      () => {},
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 5 * 60 * 1000 }
     );
 
@@ -1200,8 +1155,6 @@ export default function MapPane({
                 <a href="https://gis.audubon.org/christmasbirdcount/" target="_blank" rel="noreferrer">
                   CBC circles by National Audubon Society
                 </a>
-                {' • '}
-                <span>Developed by [redacted], 2026</span>
               </div>
             </div>
 
@@ -1226,7 +1179,6 @@ export default function MapPane({
           <ZoomControl position="bottomright" />
           <BaseLayerSync onBaseLayerName={setBaseLayerName} />
           <ZoomSync onZoomChange={setMapZoom} />
-          {/* Default view stays at US center/zoom; auto-locate may select a nearby circle. */}
 
           <LayersControl position="topright" collapsed={false}>
             <LayersControl.BaseLayer checked name={OSM_LAYER_NAME}>
@@ -1296,16 +1248,12 @@ export default function MapPane({
                         const poly = id ? cbcCenters.featureById.get(String(id)) : null;
                         const props = poly?.properties || f?.properties || {};
                         layer.bindTooltip(formatCbcTooltip(props), { direction: 'top', opacity: 0.9, sticky: true });
-                      } catch {
-                        // ignore
-                      }
+                      } catch {}
 
                       layer.on('click', (e) => {
                         try {
                           if (e?.originalEvent) L.DomEvent.stopPropagation(e.originalEvent);
-                        } catch {
-                          // ignore
-                        }
+                        } catch {}
 
                         const id = f?.properties?.__centerId;
                         const poly = id ? cbcCenters.featureById.get(String(id)) : null;

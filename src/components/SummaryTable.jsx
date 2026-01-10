@@ -35,7 +35,6 @@ function weathercodeToOpenWeatherIcon(code) {
   const c = Number(code);
   if (!Number.isFinite(c)) return '01d';
 
-  // Use daytime icons consistently.
   if (c === 0) return '01d';
   if (c === 1) return '02d';
   if (c === 2) return '03d';

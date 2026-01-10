@@ -79,18 +79,31 @@ export default function App() {
   const [candidates, setCandidates] = useState([]);
   const [saved, setSaved] = useState(() => loadSaved());
 
-  const [selectedLocation, setSelectedLocation] = useState(null); // {lat, lon, label, bounds?, source?, circle?}
+  const [selectedLocation, setSelectedLocation] = useState(null);
   const selectionIdRef = React.useRef(0);
   const [forecast, setForecast] = useState(null);
   const [error, setError] = useState('');
-  const [units, setUnits] = useState('us'); // 'us' | 'metric'
-  // Controls the forecast window (3 or 8 days).
+  const [units, setUnits] = useState('us');
   const [forecastDays, setForecastDays] = useState(8);
 
   const [highlightDateISO, setHighlightDateISO] = useState('');
 
-  const [cbcIndex, setCbcIndex] = useState(null); // Array<{ id, name, abbrev, latitude, longitude, dateLabel, circle, miles }>
+  const [cbcIndex, setCbcIndex] = useState(null);
   const [cbcIndexLoading, setCbcIndexLoading] = useState(false);
+
+  const STRIP_PERSON_FIELDS = useMemo(() => new Set([
+    'FirstName',
+    'LastName',
+    'EmailAddress',
+    'Email',
+    'email',
+    'Phone',
+    'PhoneNumber',
+    'contact_email',
+    'contact_phone',
+    'compiler',
+    'Compiler'
+  ]), []);
 
   const cbcIndexRef = React.useRef(null);
   useEffect(() => {
@@ -111,7 +124,11 @@ export default function App() {
 
       const items = [];
       for (const f of (data?.features || [])) {
-        const p = f?.properties || {};
+        const p0 = f?.properties || {};
+        const p = { ...p0 };
+        for (const k of STRIP_PERSON_FIELDS) {
+          if (k in p) delete p[k];
+        }
         const name = String(p?.Name || p?.Abbrev || '').trim();
         const abbrev = p?.Abbrev ? String(p.Abbrev).trim() : '';
         const lat = Number(p?.Latitude);
@@ -142,14 +159,11 @@ export default function App() {
       setCbcIndex(items);
       return items;
     } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to load CBC circles index', e);
-      // Don't hard-fail the app; keep normal geocoding.
       return null;
     } finally {
       setCbcIndexLoading(false);
     }
-  }, [cbcIndexLoading]);
+  }, [cbcIndexLoading, STRIP_PERSON_FIELDS]);
 
   const normalizeForSearch = useCallback((s) => {
     return String(s || '')
@@ -175,7 +189,6 @@ export default function App() {
       const hayLower = String(hayRaw || '').toLowerCase();
       const hayWords = hayLower.split(/[^a-z0-9]+/g).filter(Boolean);
 
-      // name matches should outrank abbrev matches
       const kindPenalty = kind === 'abbrev' ? 2000 : 0;
 
       if (hayNorm.startsWith(needleNorm)) {
@@ -186,8 +199,6 @@ export default function App() {
         return kindPenalty + 50 + idx;
       }
 
-      // Token-prefix match (e.g. "cosumnes" should match "Rio Cosumnes")
-      // Avoid overly-loose subsequence matching (e.g. Cosumnes ~ Conesus...).
       if (needleWords.length && hayWords.length) {
         const bestPrefixPos = hayWords
           .map((w, i) => (w.startsWith(needle) ? i : -1))
@@ -208,7 +219,6 @@ export default function App() {
       const best = [nameScore, abbrevScore].filter((x) => Number.isFinite(x)).sort((a, b) => a - b)[0];
       if (!Number.isFinite(best)) continue;
 
-      // Small tie-breaker: shorter names slightly preferred
       const score = best + Math.min(25, (item.name.length / 10));
       scored.push({ score, item });
     }
@@ -235,9 +245,7 @@ export default function App() {
         const cached = await existing.promise;
         setForecast(cached);
         return;
-      } catch {
-        // fall through to refetch
-      }
+      } catch {}
     }
 
     const p = fetchForecast({ lat, lon, days, units });
@@ -253,7 +261,6 @@ export default function App() {
     }
   }, [units]);
 
-  // Fetch 8 days and optionally filter client-side for 3-day view.
   useEffect(() => {
     if (selectedLocation) {
       fetchWithDays(selectedLocation.lat, selectedLocation.lon, 8);
@@ -302,7 +309,6 @@ export default function App() {
   }, [selectedLocation]);
 
   useEffect(() => {
-    // When selecting a CBC circle that has a known count date, default highlight to that date.
     if (countDateISO) {
       setHighlightDateISO(countDateISO);
       return;
@@ -364,7 +370,6 @@ export default function App() {
     const dateISO = countDateISO || '';
     const dateLabel = dateISO ? formatIsoToMdy(dateISO) : '';
 
-    // Requested export format: "8 day forecast - Sacramento - CASM - 12/27/2025"
     if (!circleName && !abbrev && !dateLabel) return daysLabel;
     return [daysLabel, circleName || 'CBC Circle', abbrev || '—', dateLabel || '—'].join(' - ');
   }, [forecastDays, selectedLocation, countDateISO]);
@@ -397,15 +402,12 @@ export default function App() {
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Title
       ctx.fillStyle = '#111827';
       ctx.font = '800 30px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
       ctx.fillText(title || 'Forecast', 18, 40);
 
-      // Plot
       ctx.drawImage(img, 0, titleBlock);
 
-      // Count day data
       if (countDatePassed) {
         let y = titleBlock + img.height + 34;
         ctx.fillStyle = '#111827';
@@ -426,7 +428,6 @@ export default function App() {
         }
       }
 
-      // Footer attribution
       ctx.fillStyle = 'rgba(0,0,0,0.55)';
       ctx.font = '500 14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
       ctx.fillText('Weather data by Open-Meteo.com', 18, canvas.height - 12);
@@ -437,8 +438,7 @@ export default function App() {
       a.href = canvas.toDataURL('image/png');
       a.click();
     } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error('Export failed', e);
+      setError(e?.message ? `Export failed: ${e.message}` : 'Export failed');
     }
   }, [forecastTitle, forecastDays, countDatePassed, countDateISO, countDateWeatherSummary]);
 
@@ -453,7 +453,6 @@ export default function App() {
     if (coords) {
       const sel = { lat: coords.lat, lon: coords.lon, label: `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}` };
       setSelectedLocation(sel);
-      // Effect will trigger fetch
       return;
     }
 
@@ -462,13 +461,9 @@ export default function App() {
       return;
     }
 
-    // Ensure we have the CBC circles index loaded (best-effort).
-    // IMPORTANT: load is async; use returned items so the first search includes CBC matches.
     const idx = await loadCbcIndex();
     const cbcMatches = searchCbcCircles(qTrim, idx);
 
-    // Debounce geocoding to reduce external requests when users submit repeatedly.
-    // Only the latest search will proceed.
     geocodeSeqRef.current += 1;
     const seq = geocodeSeqRef.current;
     await new Promise((r) => window.setTimeout(r, 350));
@@ -495,8 +490,6 @@ export default function App() {
     selectionIdRef.current += 1;
 
     let boundsValue = bounds;
-    // For CBC matches selected from search, we may only have a center + radius.
-    // Provide a bounds array so the map can fit the full circle.
     if (!boundsValue && circle?.properties) {
       const miles = Number(circle?.properties?.BUFF_DIST);
       const mi = Number.isFinite(miles) ? miles : 7.5;
@@ -521,7 +514,6 @@ export default function App() {
       selectionId: selectionIdRef.current,
     };
     setSelectedLocation(sel);
-    // Effect will trigger fetch
   }, []);
 
   const onSelectCandidate = useCallback((c) => {

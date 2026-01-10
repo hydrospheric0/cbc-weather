@@ -97,7 +97,6 @@ html, body {
   position: fixed;
   inset: 0;
   background: rgba(0, 150, 136, 0.7);
-  /* Keep above Leaflet controls (layers/zoom) */
   z-index: 5000;
   display: flex;
   align-items: flex-start;
@@ -112,7 +111,6 @@ html, body {
 
 .modalCard {
   width: 100%;
-  /* Responsive width: stays narrow enough to avoid overlapping map UI */
   max-width: clamp(382px, 35.1vw, 557px);
   margin-top: 0;
   border: 1px solid rgba(0,0,0,0.12);
@@ -207,7 +205,6 @@ input, button, select, textarea {
   font-family: inherit;
 }
 
-/* Plotly injects its own font defaults; keep it consistent with the page. */
 .js-plotly-plot, .plotly, .modebar {
   font-family: inherit !important;
 }
@@ -277,7 +274,6 @@ input, button, select, textarea {
   min-height: 0;
   border-radius: 0;
 
-  /* Map overlay sizing: keeps sidebar/search usable across screen sizes. */
   --cbc-overlay-pad: 10px;
   --cbc-overlay-gap: 14px;
   --cbc-sidebar-w: clamp(380px, 45vw, 720px);
@@ -289,7 +285,6 @@ input, button, select, textarea {
 }
 
 .forecastOverlay {
-  /* legacy (forecast is now inside the left map overlay) */
   display: none;
 }
 
@@ -301,7 +296,6 @@ input, button, select, textarea {
   display: flex;
   flex-direction: column;
   height: 100%;
-  /* margin-top: 14px; Removed to fix alignment in flex container */
 }
 
 .plot {
@@ -363,7 +357,6 @@ input, button, select, textarea {
   font-size: 13px;
 }
 
-/* Leaflet divIcon markers default to a bordered square. Our CBC pins provide their own HTML. */
 .cbc-pin-icon,
 .leaflet-div-icon.cbc-pin-icon {
   background: transparent !important;

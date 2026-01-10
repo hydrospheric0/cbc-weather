@@ -2,7 +2,6 @@ export function parseLatLon(input) {
   const s = (input || '').trim();
   if (!s) return null;
 
-  // Accept: "lat, lon" or "lat lon"
   const m = s.match(/^(-?\d+(?:\.\d+)?)\s*[ ,]\s*(-?\d+(?:\.\d+)?)$/);
   if (!m) return null;
 

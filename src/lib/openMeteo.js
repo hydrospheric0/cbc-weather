@@ -52,7 +52,6 @@ export async function fetchForecast({ lat, lon, days = 3, units = 'us' }) {
     url.searchParams.set('wind_speed_unit', 'kmh');
     url.searchParams.set('precipitation_unit', 'mm');
   } else {
-    // Default: US customary
     url.searchParams.set('temperature_unit', 'fahrenheit');
     url.searchParams.set('wind_speed_unit', 'mph');
     url.searchParams.set('precipitation_unit', 'inch');

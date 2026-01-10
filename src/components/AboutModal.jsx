@@ -3,9 +3,7 @@ import React, { useEffect } from 'react';
 const CBC_CIRCLES_URL = 'https://gis.audubon.org/christmasbirdcount/';
 
 const APPLICATION_PORTAL_URL =
-  'https://netapp.audubon.org/aap/application/cbc?_gl=1*14vfzzw*_gcl_au*NDI1NjA4MDIuMTc2NjI5MTI2MA..*_ga*MTAwNTY5OTc2Ny4xNzY2MjkxMjU5*_ga_X2XNL2MWTT*czE3NjY1OTQ0MjEkbzIkZzAkdDE3NjY1OTQ0MjEkajYwJGwwJGgw';
-
-const SPONSOR_URL = 'https://github.com/sponsors/hydrospheric0';
+  'https://netapp.audubon.org/aap/application/cbc';
 
 export default function AboutModal({ open, onClose }) {
   useEffect(() => {
@@ -82,19 +80,8 @@ export default function AboutModal({ open, onClose }) {
           </p>
 
           <p style={{ marginTop: 12 }}>
-            If you find this tool useful, please consider supporting its development:
+            If you find this tool useful, please consider sharing it with other CBC circle compilers.
           </p>
-
-          <div className="sponsorBlock">
-            <a
-              className="button sponsorButton"
-              href={SPONSOR_URL}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Sponsor hydrospheric0
-            </a>
-          </div>
         </div>
       </div>
     </div>

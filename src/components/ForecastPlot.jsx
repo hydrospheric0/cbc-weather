@@ -4,7 +4,6 @@ import { dir16 } from '../lib/geo.js';
 function weathercodeToOpenWeatherIcon(code) {
   const c = Number(code);
   if (!Number.isFinite(c)) return '01d';
-  // Use daytime icons consistently.
   if (c === 0) return '01d';
   if (c === 1) return '02d';
   if (c === 2) return '03d';
@@ -19,7 +18,6 @@ function weathercodeToOpenWeatherIcon(code) {
 }
 
 function toDate(x) {
-  // Open-Meteo hourly.time is ISO-like (timezone already applied by API)
   return new Date(x);
 }
 
@@ -54,7 +52,6 @@ export default function ForecastPlot({ forecast, highlightDateISO, extendXAxisTo
       [1.0, '#d62728']
     ];
 
-    // Labels: every 3h if <= 3 days, else every 12h
     const durationDays = (t[t.length - 1] - t[0]) / (1000 * 3600 * 24);
     const intervalHours = durationDays <= 3.5 ? 3 : 12;
     const isLongDuration = durationDays > 3.5;
@@ -79,8 +76,6 @@ export default function ForecastPlot({ forecast, highlightDateISO, extendXAxisTo
       return new Date(base.getTime() + 12 * 60 * 60 * 1000);
     };
 
-    // Dashed midnight markers (00:00) in both subplots.
-    // Implemented as shapes so we don't have to change tick/grid cadence.
     const firstMidnight = (() => {
       const d = new Date(axisStart);
       d.setHours(0, 0, 0, 0);
@@ -117,7 +112,6 @@ export default function ForecastPlot({ forecast, highlightDateISO, extendXAxisTo
       const start = axisStart;
       const end = axisEnd;
 
-      // Highlight selected day (count date) in light yellow.
       if (d0 < end && d1 > start) {
         shapes.push({
           type: 'rect',
@@ -188,7 +182,6 @@ export default function ForecastPlot({ forecast, highlightDateISO, extendXAxisTo
         const lines = [tPart, rPart, wPart, dPart].filter((s) => String(s).trim() !== '');
         if (lines.length === 0) continue;
 
-        // Add icon above the day summary.
         daySummaryImages.push({
           source: iconUrl,
           xref: 'x',
@@ -291,7 +284,6 @@ export default function ForecastPlot({ forecast, highlightDateISO, extendXAxisTo
       layout: {
         title: { text: '', x: 0.01, xanchor: 'left' },
         height: 520,
-        // Reduce top/bottom whitespace.
         margin: { l: 55, r: 55, t: 125, b: 55 },
         barmode: 'overlay',
         plot_bgcolor: 'white',
@@ -304,7 +296,6 @@ export default function ForecastPlot({ forecast, highlightDateISO, extendXAxisTo
           domain: [0, 1],
           anchor: 'y',
           range: [axisStart, axisEnd],
-          // Avoid auto gridlines (which can include 12:00). Midnight is drawn via shapes.
           showgrid: false,
           showline: true,
           mirror: true,
@@ -332,7 +323,6 @@ export default function ForecastPlot({ forecast, highlightDateISO, extendXAxisTo
           domain: [0, 1],
           anchor: 'y3',
           range: [axisStart, axisEnd],
-          // Avoid auto gridlines (which can include 12:00). Midnight is drawn via shapes.
           showgrid: false,
           showline: true,
           mirror: true,
@@ -369,8 +359,6 @@ export default function ForecastPlot({ forecast, highlightDateISO, extendXAxisTo
 
     const ensurePlotly = async () => {
       if (plotlyRef.current) return plotlyRef.current;
-
-      // Smaller Plotly bundle than full dist-min.
       const mod = await import('plotly.js-basic-dist-min');
       plotlyRef.current = mod.default;
       return plotlyRef.current;

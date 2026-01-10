@@ -45,7 +45,6 @@ function downloadTextFile({ filename, text, mime }) {
 }
 
 const WIND_DIRS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'Variable', 'Calm', 'Unknown'];
-// Required categories (plus Unknown as a safe default).
 const CLOUD_COVER = ['Clear', 'Cloudy', 'Foggy', 'Local Fog', 'Partly Clear', 'Partly Cloudy', 'Unknown'];
 const INTENSITY = ['None', 'Light', 'Heavy', 'Unknown'];
 const WATER = ['None', 'Some', 'Many', 'Unknown'];
@@ -76,7 +75,6 @@ function mergePrefillIntoForm(current, prefill) {
     if (!canFill) return;
     next[k] = v;
   });
-  // Always normalize to current cloud categories.
   next.cloudCoverAM = normalizeCloudValue(next.cloudCoverAM);
   next.cloudCoverPM = normalizeCloudValue(next.cloudCoverPM);
   return next;
@@ -165,7 +163,6 @@ export default function CountDayForm({ circleName, abbrev, dateISO, enabled, pre
   }));
 
   useEffect(() => {
-    // Reload from storage when switching circles/dates.
     const nextAll = loadAll();
     setAll(nextAll);
     const saved = nextAll?.[storageKey] || null;
@@ -225,7 +222,6 @@ export default function CountDayForm({ circleName, abbrev, dateISO, enabled, pre
     saveAll(nextAll);
     setAll(nextAll);
 
-    // Export a one-row CSV for easy sharing/archiving.
     const row = {
       circleName: record.circleName,
       abbrev: record.abbrev,

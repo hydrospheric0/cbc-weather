@@ -1,19 +1,14 @@
 function baseUrl() {
   const env = (import.meta?.env?.VITE_AWC_BASE_URL || '').trim();
   if (env) return env.replace(/\/$/, '');
-  // Prefer local proxy to avoid CORS issues (dev + preview).
   try {
     const host = String(window?.location?.hostname || '').toLowerCase();
     if (host === 'localhost' || host === '127.0.0.1') return '/awc';
 
-    // Default production hosting for this repo is GitHub Pages.
-    // If the build-time env var wasn't set, fall back to the deployed Worker.
-    if (host === 'hydrospheric0.github.io') {
+    if (host.endsWith('.github.io')) {
       return 'https://cbc-weather-awc-proxy.cbc-weather.workers.dev';
     }
-  } catch {
-    // ignore
-  }
+  } catch {}
   return 'https://aviationweather.gov';
 }
 
@@ -45,7 +40,6 @@ export async function fetchMetarsJSON({ ids, hours, date, signal }) {
 export function approxUtcOffsetHoursFromLon(lon) {
   const x = Number(lon);
   if (!Number.isFinite(x)) return 0;
-  // Rough timezone proxy: 15° longitude per hour.
   return Math.round(x / 15);
 }
 
@@ -111,7 +105,6 @@ function cloudCategoryFromMetar(metar) {
   const clouds = Array.isArray(metar?.clouds) ? metar.clouds : [];
   const covers = clouds.map((c) => String(c?.cover || '').toUpperCase()).filter(Boolean);
 
-  // Pick the "worst" cover.
   const rank = (c) => {
     if (c === 'OVC' || c === 'OVX') return 5;
     if (c === 'BKN') return 4;
@@ -187,7 +180,6 @@ export function deriveCountDayPrefillFromMetars({ metars, stationLon, countDateI
     const part = t.hourLocal < 12 ? am : pm;
     part.cloud = worstCloud(part.cloud, cloudCategoryFromMetar(m));
 
-    // Intensities: keep the max.
     const rankI = { 'None': 0, 'Light': 1, 'Heavy': 2, 'Unknown': 0 };
     const rRain = intensityFromWx(m?.wxString, 'rain');
     if ((rankI[rRain] ?? 0) > (rankI[part.rain] ?? 0)) part.rain = rRain;
@@ -214,7 +206,6 @@ export function deriveCountDayPrefillFromMetars({ metars, stationLon, countDateI
     patch.snowMaxIn = String(Math.round(Math.max(...snowIn) * 10) / 10);
   }
 
-  // Wind direction: prefer explicit VRB, else circular mean.
   if (windDirs.includes('VRB')) {
     patch.windDir = 'Variable';
   } else {
