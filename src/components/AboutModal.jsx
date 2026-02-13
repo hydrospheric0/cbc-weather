@@ -46,7 +46,7 @@ export default function AboutModal({ open, onClose }) {
             <a
               href="https://www.audubon.org/community-science/christmas-bird-count"
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
             >
               Audubon website
             </a>
@@ -73,7 +73,7 @@ export default function AboutModal({ open, onClose }) {
           <p style={{ marginTop: 6 }}>
             By default the tool will request the user’s location. If permitted, the tool zooms in on the nearest
             count circle and populates the weather forecast. If the count date was published on the{' '}
-            <a href={CBC_CIRCLES_URL} target="_blank" rel="noreferrer">
+            <a href={CBC_CIRCLES_URL} target="_blank" rel="noopener noreferrer">
               CBC circles by National Audubon Society
             </a>
             , the count date will be highlighted on the plot.
@@ -83,7 +83,7 @@ export default function AboutModal({ open, onClose }) {
             Once the count has passed, the weather information for that circle’s count date will be automatically
             populated. This is the information a compiler needs to provide when filling out the count results on
             the{' '}
-            <a href={APPLICATION_PORTAL_URL} target="_blank" rel="noreferrer">
+            <a href={APPLICATION_PORTAL_URL} target="_blank" rel="noopener noreferrer">
               Application Portal
             </a>
             .
@@ -100,14 +100,14 @@ export default function AboutModal({ open, onClose }) {
             <strong>Source code</strong>
           </div>
           <p style={{ marginTop: 6 }}>
-            <a href={SOURCE_CODE_URL} target="_blank" rel="noreferrer">GitHub</a>
+            <a href={SOURCE_CODE_URL} target="_blank" rel="noopener noreferrer">GitHub</a>
           </p>
 
           <div style={{ marginTop: 12, fontWeight: 700 }}>
             <strong>Support</strong>
           </div>
           <p style={{ marginTop: 6 }}>
-            <a href={SUPPORT_URL} target="_blank" rel="noreferrer">
+            <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer">
               <img
                 src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
                 alt="Buy Me a Coffee"

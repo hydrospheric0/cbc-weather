@@ -11,6 +11,11 @@ html, body {
   --accent-teal: #009688;
   --accent-green: #748938;
   --accent-slate: #4b6576;
+  --ui-scale: clamp(0.9, 0.45vw + 0.78, 1.12);
+  --topbar-h: clamp(4.9rem, 8.8vh, 6.7rem);
+  --footer-h: clamp(4.1rem, 8vh, 5.8rem);
+  --topbar-pad-x: clamp(0.7rem, 1.45vw, 0.95rem);
+  --panel-pad: clamp(0.42rem, 0.85vh, 0.62rem) clamp(0.52rem, 1.1vw, 0.82rem);
 }
 
 h1,
@@ -44,14 +49,15 @@ h6 {
 .topbar {
   width: 100%;
   box-sizing: border-box;
-  height: 150px;
-  padding: 0 18px;
+  height: var(--topbar-h);
+  min-height: var(--topbar-h);
+  padding: 0 var(--topbar-pad-x);
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid rgba(0,0,0,0.08);
   font-weight: 800;
-  font-size: 32px;
+  font-size: clamp(1.2rem, 1.9vw, 1.65rem);
   line-height: 1.15;
   background: var(--header-bg);
   color: #f9fafb;
@@ -59,20 +65,20 @@ h6 {
 }
 
 .topbarTitle {
-  padding-right: 10px;
+  padding-right: clamp(0.45rem, 0.9vw, 0.65rem);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: clamp(0.16rem, 0.4vh, 0.28rem);
 }
 
 .appTitle {
-  font-size: 32px;
+  font-size: clamp(1.2rem, 1.9vw, 1.65rem);
   line-height: 1.15;
 }
 
 .topbarMeta {
   font-family: 'Poppins', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  font-size: 12px;
+  font-size: clamp(0.64rem, 0.72vw, 0.78rem);
   font-weight: 600;
   line-height: 1.25;
   color: rgba(255, 255, 255, 0.9);
@@ -87,11 +93,11 @@ h6 {
 
 .ghBadge {
   display: block;
-  height: 18px;
+  height: clamp(0.8rem, 1.6vh, 1.15rem);
 }
 
 .projectRow {
-  margin-top: 4px;
+  margin-top: clamp(0.18rem, 0.5vh, 0.3rem);
 }
 
 .topbarLink {
@@ -106,8 +112,9 @@ h6 {
 .footerbar {
   width: 100%;
   box-sizing: border-box;
-  height: 100px;
-  padding: 0 18px;
+  height: var(--footer-h);
+  min-height: var(--footer-h);
+  padding: 0 var(--topbar-pad-x);
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -128,22 +135,22 @@ h6 {
 }
 
 .bmcButton {
-  height: 44px;
+  height: clamp(2rem, 4.2vh, 2.75rem);
   width: auto;
   display: block;
 }
 
 .infoButton {
-  width: 34px;
-  height: 34px;
+  width: clamp(1.6rem, 2.8vh, 1.9rem);
+  height: clamp(1.6rem, 2.8vh, 1.9rem);
   border-radius: 999px;
   border: 3px solid rgba(255,255,255,0.95);
   background: var(--accent-teal);
   color: #f9fafb;
   cursor: pointer;
   font-weight: 900;
-  font-size: 16px;
-  line-height: 34px;
+  font-size: clamp(0.72rem, 1.2vh, 0.9rem);
+  line-height: clamp(1.45rem, 2.6vh, 1.8rem);
   text-align: center;
   flex: 0 0 auto;
 }
@@ -160,10 +167,10 @@ h6 {
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
-  padding-top: calc(150px + 12px);
-  padding-right: 10px;
-  padding-left: 10px;
-  padding-bottom: 18px;
+  padding-top: calc(var(--topbar-h) + clamp(0.5rem, 1vh, 0.75rem));
+  padding-right: clamp(0.5rem, 1vw, 0.7rem);
+  padding-left: clamp(0.5rem, 1vw, 0.7rem);
+  padding-bottom: clamp(0.8rem, 1.8vh, 1.15rem);
   box-sizing: border-box;
   overflow: auto;
 }
@@ -179,14 +186,14 @@ h6 {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - (150px + 12px) - 18px);
+  max-height: calc(100vh - (var(--topbar-h) + clamp(0.5rem, 1vh, 0.75rem)) - clamp(0.8rem, 1.8vh, 1.15rem));
 }
 
 .modalHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
+  padding: var(--panel-pad);
   border-bottom: 1px solid rgba(0,0,0,0.08);
   background: var(--accent-green);
   color: #fff;
@@ -210,8 +217,8 @@ h6 {
 }
 
 .modalBody {
-  padding: 12px 14px 16px;
-  font-size: 14px;
+  padding: clamp(0.55rem, 1.1vh, 0.75rem) clamp(0.65rem, 1.35vw, 0.95rem) clamp(0.75rem, 1.5vh, 1rem);
+  font-size: clamp(0.74rem, 0.88vw, 0.9rem);
   line-height: 1.45;
   overflow: auto;
 }
@@ -221,7 +228,7 @@ h6 {
 }
 
 .modalBody ul {
-  margin: 8px 0 0 18px;
+  margin: clamp(0.3rem, 0.8vh, 0.45rem) 0 0 clamp(0.7rem, 1.4vw, 1rem);
   padding: 0;
 }
 
@@ -256,7 +263,7 @@ h6 {
   width: 86%;
   max-width: 1600px;
   margin: 0 auto;
-  padding: 10px 0 18px;
+  padding: clamp(0.45rem, 0.9vh, 0.65rem) 0 clamp(0.8rem, 1.8vh, 1.15rem);
   box-sizing: border-box;
 }
 
@@ -277,7 +284,7 @@ input, button, select, textarea {
 .grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 14px;
+  gap: clamp(0.6rem, 1.3vh, 0.9rem);
   align-items: stretch;
 }
 
@@ -293,24 +300,24 @@ input, button, select, textarea {
 }
 
 .cardHeader {
-  padding: 10px 12px;
+  padding: var(--panel-pad);
   border-bottom: 1px solid rgba(0,0,0,0.08);
   font-weight: 600;
 }
 
 .cardBody {
-  padding: 10px 12px;
+  padding: var(--panel-pad);
 }
 
 .sidebar {
   height: 40vh;
-  min-height: 320px;
+  min-height: clamp(14rem, 32vh, 20rem);
   overflow: auto;
 }
 
 .mapWrap {
   height: 50vh;
-  min-height: 320px;
+  min-height: clamp(14rem, 32vh, 20rem);
 }
 
 .mapFullWrap {
@@ -319,9 +326,9 @@ input, button, select, textarea {
 }
 
 .map {
-  margin: 8px;
-  height: calc(50vh - 16px);
-  min-height: 304px;
+  margin: clamp(0.35rem, 0.8vh, 0.5rem);
+  height: calc(50vh - (2 * clamp(0.35rem, 0.8vh, 0.5rem)));
+  min-height: clamp(13.5rem, 30vh, 19rem);
   border-radius: 10px;
   overflow: hidden;
   position: relative;
@@ -334,7 +341,7 @@ input, button, select, textarea {
   border-radius: 0;
 
   --cbc-overlay-pad: 10px;
-  --cbc-overlay-gap: 14px;
+  --cbc-overlay-gap: clamp(0.6rem, 1.4vw, 0.9rem);
   --cbc-sidebar-w: clamp(380px, 45vw, 720px);
   --cbc-search-w: clamp(280px, 22vw, 420px);
 }
@@ -358,7 +365,7 @@ input, button, select, textarea {
 }
 
 .plot {
-  height: 520px;
+  height: clamp(20rem, 54vh, 32.5rem);
   width: 100%;
 }
 
@@ -371,14 +378,14 @@ input, button, select, textarea {
 .input {
   width: 100%;
   box-sizing: border-box;
-  padding: 8px 10px;
+  padding: clamp(0.4rem, 0.9vh, 0.55rem) clamp(0.5rem, 1.1vw, 0.65rem);
   border: 1px solid rgba(0,0,0,0.18);
   border-radius: 8px;
-  font-size: 14px;
+  font-size: clamp(0.74rem, 0.88vw, 0.9rem);
 }
 
 .button {
-  padding: 8px 10px;
+  padding: clamp(0.4rem, 0.9vh, 0.55rem) clamp(0.5rem, 1.1vw, 0.65rem);
   border: 1px solid rgba(0,0,0,0.18);
   border-radius: 8px;
   background: #fff;
@@ -387,21 +394,21 @@ input, button, select, textarea {
 }
 
 .small {
-  font-size: 12px;
+  font-size: clamp(0.64rem, 0.72vw, 0.78rem);
   color: rgba(0,0,0,0.65);
 }
 
 .list {
-  margin: 10px 0 0;
+  margin: clamp(0.45rem, 1vh, 0.65rem) 0 0;
   padding: 0;
   list-style: none;
-  max-height: 180px;
+  max-height: clamp(7.5rem, 19vh, 11.25rem);
   overflow: auto;
   border-top: 1px solid rgba(0,0,0,0.06);
 }
 
 .listItem {
-  padding: 8px 6px;
+  padding: clamp(0.38rem, 0.9vh, 0.55rem) clamp(0.3rem, 0.8vw, 0.45rem);
   border-bottom: 1px solid rgba(0,0,0,0.06);
   cursor: pointer;
 }
@@ -411,9 +418,9 @@ input, button, select, textarea {
 }
 
 .error {
-  margin-top: 8px;
+  margin-top: clamp(0.35rem, 0.9vh, 0.55rem);
   color: #b91c1c;
-  font-size: 13px;
+  font-size: clamp(0.68rem, 0.8vw, 0.84rem);
 }
 
 .cbc-pin-icon,

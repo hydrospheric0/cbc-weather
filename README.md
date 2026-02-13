@@ -1,7 +1,5 @@
 # CBC weather
 
-[![languages](https://img.shields.io/github/languages/count/hydrospheric0/cbc-weather?label=languages)](https://github.com/hydrospheric0/cbc-weather)
-
 ## About the Christmas Bird Count
 The Christmas Bird Count is the nation’s longest-running community science bird project. They take place annualy between December 14 to January 5 in over 3000 count circles. More information can be found on the [Audubon website](https://www.audubon.org/community-science/christmas-bird-count).
 
@@ -36,6 +34,7 @@ For the “Weather report” (observed conditions after the count), this project
 - METAR observations: `/api/data/metar` (to derive AM/PM cloud and precipitation categories, wind, temperature, etc.)
 
 ### Support this project
+If you find this tool useful, please consider supporting its development:
 
 <a href="https://buymeacoffee.com/bartg">
 	<img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" width="180" />

@@ -1173,22 +1173,22 @@ export default function MapPane({
 
               <hr style={{ border: 0, borderTop: '1px solid rgba(0,0,0,0.12)', marginTop: 14, marginBottom: 10 }} />
               <div className="small" style={{ opacity: 0.85, lineHeight: 1.35 }}>
-                <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
+                <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">
                   Forecast data Open-Meteo.com
                 </a>
                 {' • '}
-                <a href="https://aviationweather.gov/" target="_blank" rel="noreferrer">
+                <a href="https://aviationweather.gov/" target="_blank" rel="noopener noreferrer">
                   Station data: Aviationweather.gov
                 </a>
                 {' • '}
-                <a href="https://gis.audubon.org/christmasbirdcount/" target="_blank" rel="noreferrer">
+                <a href="https://gis.audubon.org/christmasbirdcount/" target="_blank" rel="noopener noreferrer">
                   CBC circles
                 </a>
                 {' • '}
                 <a
                   href="https://netapp.audubon.org/aap/application/cbc"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                 >
                   Audubon Application Portal
                 </a>
@@ -1306,7 +1306,7 @@ export default function MapPane({
               {rainViewerRadarUrl ? (
                 <TileLayer
                   ref={rainViewerLayerRef}
-                  attribution='&copy; <a href="https://www.rainviewer.com" target="_blank" rel="noreferrer">RainViewer</a>'
+                  attribution='&copy; <a href="https://www.rainviewer.com" target="_blank" rel="noopener noreferrer">RainViewer</a>'
                   url={rainViewerRadarUrl}
                   opacity={0.7}
                 />

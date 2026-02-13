@@ -634,7 +634,7 @@ export default function App() {
           className="sponsorButton"
           href="https://buymeacoffee.com/bartg"
           target="_blank"
-          rel="noreferrer noopener"
+          rel="noopener noreferrer"
           aria-label="Support this project"
         >
           <img
