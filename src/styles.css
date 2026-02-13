@@ -16,6 +16,9 @@ html, body {
   --footer-h: clamp(4.1rem, 8vh, 5.8rem);
   --topbar-pad-x: clamp(0.7rem, 1.45vw, 0.95rem);
   --panel-pad: clamp(0.42rem, 0.85vh, 0.62rem) clamp(0.52rem, 1.1vw, 0.82rem);
+  --desktop-min-w: 72rem;
+  --desktop-max-w: 160rem;
+  --desktop-content-max: 120rem;
 }
 
 h1,
@@ -36,6 +39,7 @@ h6 {
   background: #ffffff;
   color: #454545;
   font-family: 'Poppins', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  width: 100%;
 }
 
 .appFull {
@@ -44,6 +48,9 @@ h6 {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: var(--desktop-max-w);
+  margin: 0 auto;
 }
 
 .topbar {
@@ -117,11 +124,18 @@ h6 {
   padding: 0 var(--topbar-pad-x);
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   border-top: none;
   background: #222;
   color: #f9fafb;
   font-family: 'Poppins', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}
+
+.footerCopyright {
+  color: #ffffff;
+  font-size: clamp(0.72rem, 0.9vw, 0.95rem);
+  font-weight: 500;
+  text-align: left;
 }
 
 .footerLink {
@@ -244,6 +258,7 @@ h6 {
 .sponsorButton {
   display: inline-block;
   text-decoration: none;
+  margin-left: auto;
 }
 
 .loadingSpinner {
@@ -260,8 +275,8 @@ h6 {
 }
 
 .content {
-  width: 86%;
-  max-width: 1600px;
+  width: min(86%, var(--desktop-content-max));
+  max-width: var(--desktop-content-max);
   margin: 0 auto;
   padding: clamp(0.45rem, 0.9vh, 0.65rem) 0 clamp(0.8rem, 1.8vh, 1.15rem);
   box-sizing: border-box;

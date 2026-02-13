@@ -630,6 +630,7 @@ export default function App() {
       />
       </div>
       <footer className="footerbar">
+        <span className="footerCopyright">(C) Bart Wickel, 2026</span>
         <a
           className="sponsorButton"
           href="https://buymeacoffee.com/bartg"

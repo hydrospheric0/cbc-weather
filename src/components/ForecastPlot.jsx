@@ -385,6 +385,40 @@ export default function ForecastPlot({ forecast, highlightDateISO, extendXAxisTo
     };
   }, [fig]);
 
+  useEffect(() => {
+    const el = divRef.current;
+    if (!el || !fig) return;
+
+    let frame = 0;
+    const scheduleResize = () => {
+      const Plotly = plotlyRef.current;
+      if (!Plotly || !el) return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        try {
+          Plotly.Plots.resize(el);
+        } catch {}
+      });
+    };
+
+    scheduleResize();
+
+    let observer;
+    if (window.ResizeObserver) {
+      observer = new ResizeObserver(() => scheduleResize());
+      observer.observe(el);
+      if (el.parentElement) observer.observe(el.parentElement);
+    }
+
+    window.addEventListener('resize', scheduleResize, { passive: true });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', scheduleResize);
+      if (observer) observer.disconnect();
+    };
+  }, [fig]);
+
   return (
     <div className="plot" id={plotId} ref={divRef} />
   );

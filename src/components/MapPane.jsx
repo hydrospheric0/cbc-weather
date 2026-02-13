@@ -215,6 +215,45 @@ function BaseLayerSync({ onBaseLayerName }) {
   return null;
 }
 
+function MapResizeSync() {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) return undefined;
+
+    let frame = 0;
+    const scheduleResize = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        try {
+          map.invalidateSize({ pan: false, animate: false });
+        } catch {}
+      });
+    };
+
+    scheduleResize();
+
+    const container = map.getContainer?.();
+    const target = container?.parentElement || container || null;
+
+    let observer;
+    if (window.ResizeObserver && target) {
+      observer = new ResizeObserver(() => scheduleResize());
+      observer.observe(target);
+    }
+
+    window.addEventListener('resize', scheduleResize, { passive: true });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', scheduleResize);
+      if (observer) observer.disconnect();
+    };
+  }, [map]);
+
+  return null;
+}
+
 function OverlayActiveSync({ layerRef, onActiveChange }) {
   const map = useMap();
 
@@ -1216,6 +1255,7 @@ export default function MapPane({
           <ZoomControl position="bottomright" />
           <BaseLayerSync onBaseLayerName={setBaseLayerName} />
           <ZoomSync onZoomChange={setMapZoom} />
+          <MapResizeSync />
 
           <LayersControl position="topright" collapsed={false}>
             <LayersControl.BaseLayer checked name={OSM_LAYER_NAME}>
