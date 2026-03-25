@@ -7,6 +7,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     port: 5173,
     strictPort: true,
+    cors: false,
     proxy: {
       '/awc': {
         target: 'https://aviationweather.gov',

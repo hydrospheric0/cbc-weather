@@ -631,19 +631,6 @@ export default function App() {
       </div>
       <footer className="footerbar">
         <span className="footerCopyright">(C) Bart Wickel, 2026</span>
-        <a
-          className="sponsorButton"
-          href="https://buymeacoffee.com/bartg"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Support this project"
-        >
-          <img
-            className="bmcButton"
-            src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
-            alt="Buy Me a Coffee"
-          />
-        </a>
       </footer>
     </div>
   );

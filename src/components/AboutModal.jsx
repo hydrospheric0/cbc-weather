@@ -7,7 +7,6 @@ const APPLICATION_PORTAL_URL =
 
 const SOURCE_CODE_URL = 'https://github.com/hydrospheric0/cbc-weather';
 
-const SUPPORT_URL = 'https://buymeacoffee.com/bartg';
 
 export default function AboutModal({ open, onClose }) {
   useEffect(() => {
@@ -103,18 +102,7 @@ export default function AboutModal({ open, onClose }) {
             <a href={SOURCE_CODE_URL} target="_blank" rel="noopener noreferrer">GitHub</a>
           </p>
 
-          <div style={{ marginTop: 12, fontWeight: 700 }}>
-            <strong>Support</strong>
-          </div>
-          <p style={{ marginTop: 6 }}>
-            <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer">
-              <img
-                src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
-                alt="Buy Me a Coffee"
-                width="140"
-              />
-            </a>
-          </p>
+
         </div>
       </div>
     </div>
